@@ -1,12 +1,12 @@
 import numpy as np
-import scipy
+import scipy as scipy
 from numpy.random import uniform
 import scipy.stats
  
  
 np.set_printoptions(threshold=3)
 np.set_printoptions(suppress=True)
-import cv2
+import cv2 
  
  
 def drawLines(img, points, r, g, b):
