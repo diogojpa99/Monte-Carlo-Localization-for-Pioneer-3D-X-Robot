@@ -6,7 +6,7 @@ import scipy.stats
  
 np.set_printoptions(threshold=3)
 np.set_printoptions(suppress=True)
-import cv2
+import cv2 as cv2
  
  
 def drawLines(img, points, r, g, b):
