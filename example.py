@@ -127,7 +127,7 @@ x_range=np.array([0,800])
 y_range=np.array([0,600])
  
 #Number of partciles
-N=400
+N=100
  
 landmarks=np.array([ [144,73], [410,13], [336,175], [718,159], [178,484], [665,464]  ])
 NL = len(landmarks)
@@ -158,8 +158,8 @@ while(1):
     drawCross(img, center, r=255, g=0, b=0)
     
     #landmarks
-    for landmark in landmarks:
-        cv2.circle(img,tuple(landmark),10,(255,0,0),-1)
+    #for landmark in landmarks:
+        #cv2.circle(img,tuple(landmark),10,(255,0,0),-1)
     
     #draw_particles:
     for particle in particles:
