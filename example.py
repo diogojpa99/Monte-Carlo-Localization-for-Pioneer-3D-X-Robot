@@ -32,7 +32,7 @@ def mouseCallback(event, x, y, flags,null):
     
     center=np.array([[x,y]])
     trajectory=np.vstack((trajectory,np.array([x,y])))
-    #noise=sensorSigma * np.random.randn(1,2) + sensorMu
+    noise=sensorSigma * np.random.randn(1,2) + sensorMu
     
     if previous_x >0:
         heading=np.arctan2(np.array([y-previous_y]), np.array([previous_x-x ]))
@@ -61,9 +61,9 @@ def mouseCallback(event, x, y, flags,null):
 WIDTH=800
 HEIGHT=600
 WINDOW_NAME="Particle Filter"
- 
-#sensorMu=0
-#sensorSigma=3
+
+sensorMu=0
+sensorSigma=3
  
 sensor_std_err=5
  
@@ -129,7 +129,7 @@ y_range=np.array([0,600])
 #Number of partciles
 N=100
  
-landmarks=np.array([ [144,73], [410,13], [336,175], [718,159], [178,484], [665,464]  ])
+landmarks=np.array([ [0,0], [0,600], [800,0], [800,600], [400,0], [400,600], [0,300], [800,300]  ])
 NL = len(landmarks)
 particles=create_uniform_particles(x_range, y_range, N)
  
@@ -158,8 +158,8 @@ while(1):
     drawCross(img, center, r=255, g=0, b=0)
     
     #landmarks
-    #for landmark in landmarks:
-        #cv2.circle(img,tuple(landmark),10,(255,0,0),-1)
+    for landmark in landmarks:
+        cv2.circle(img,tuple(landmark),10,(255,0,0),-1)
     
     #draw_particles:
     for particle in particles:
