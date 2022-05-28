@@ -3,13 +3,23 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy.random import uniform
-from math import cos, sin, sqrt
+from numpy.random import normal
+from math import cos, sin, sqrt, exp, pi
 
 
 
 
 """ Functions """
 
+
+# plotting():
+def plotting(landmarks, robot_loc, particles):
+    plt.scatter(landmarks[:,0],landmarks[:,1], c = 'black')
+    plt.scatter(robot_loc[0], robot_loc[1], marker = 'x', c = 'red' )
+    plt.scatter(particles[:,0], particles[:,1], marker = '2', c = 'green', s = 10 )
+    plt.show()
+
+    return
 
 
 # create_map():
@@ -93,8 +103,6 @@ def odometry_model(prev_loc, vel, angle):
     loc[1] = prev_loc[1] + vel*sin(angle)
     loc[2] = prev_loc[2] + angle 
 
-    #Adding some noise:
-
 
     return loc
 
@@ -142,6 +150,26 @@ def create_particles(M):
     return particles
 
 
+# predict():
+# Does the predict of the Particle Filter
+# We need the target distribution and adding it some random noise
+# !! ATENÇÃO !! What is the mean and standard deviation to that normal noise ???
+# Input:
+# particles: Set of particles
+# actions: vel and rotation topics
+# Output:
+# Set of particles in new positions 
+def predict(particles, actions):
+
+    i = 0
+    for particle in particles:
+        model  = odometry_model(particles[i], actions[0], actions[1]).reshape((3,))   
+        particles[i] = model + normal(loc=0.0, scale=1.0, size=3)
+        i += 1
+
+    return particles 
+
+
 # Funções que faltam:
 # Particle_filter(): Incluir tudo -> Tem que ser recursiva
 # Particle_filter_init(): Iniciar o algoritmo recursivo
@@ -153,10 +181,48 @@ def create_particles(M):
 # Ver consistência do algoritmo, robustez, etc.
 
 
+# normal_distribution():
+def normal_dist(x , mean , sd):
+    prob_density = (1/(sd*sqrt(2*pi)))*exp(-0.5*((x-mean)/sd)**2)
+    return prob_density
+
+
+# update():
+def update(measurments, particles, landmarks):
+
+
+    # Distance from each particle to each landmark
+    # We have 184 measures and M particles
+    distances = np.empty([184,M])
+    noise = np.empty([184,M])
+    probs = np.empty([184,M])
+    weights = np.empty([M,1])
+
+    for i in range (M):
+        distances[:,i] = laser_model(particles[i], landmarks).reshape((184,))
+        noise[:,i] = measurments.reshape((184,)) - distances[:,i]
+            
+    for i in range (M):
+        for j in range (len(measurments)):
+            probs[j][i] = normal_dist(noise[j][i], mean = distances[j][i], sd = sqrt(pow(noise[j][i]-distances[j][i],2)))
+            print(probs[j][i])
+
+    #The weights are the product of the likelihoods of the measurments 
+    for i in range (M):
+        weights[i] = np.prod(probs[:,i]) 
+
+    return weights
+
+
 """ Global Variables """
 
 #Number of particles
 M = 100
+
+#Actions
+# action[0] : cmd_vel
+# action[1] : twist
+actions = np.empty([2,1])
 
 
 """ main() """
@@ -165,37 +231,62 @@ M = 100
 landmarks = create_map()
 
 # loc: Localization of the robot
-loc = init_robot_pos()
+robot_loc = init_robot_pos()
 
 #Activationg interactive mode
 plt.ion()
 
+
+""" Particle_filter_init(): """
+
+# Particle_filter_init():
+# This function initiates the Particle Filter Algorithm
+# Input:
+# robot_model: Localization of the robot plus some noise
+# particles: Set of particles 
+# weights: Set of weights
+# laser_model: measures of the laser plus some noise
+# Ouput:
+# Particle_filter()
+
+
 #Create particles
 particles = create_particles(M)
 
-while(1):
-    
+#Create weights
+weights = np.empty([M,1])
+
+while(1):    
+
     # Plotting
-    plt.scatter(landmarks[:,0],landmarks[:,1], c = 'black')
-    plt.scatter(loc[0], loc[1], marker = 'x', c = 'red' )
-    plt.scatter(particles[:,0], particles[:,1], marker = '2', c = 'green', s = 10 )
-    plt.show()
+    plotting(landmarks, robot_loc, particles)
 
     #Getting info from the terminal
     print('Please input the robot velocity:')
-    vel = float(input())
+    actions[0] = float(input())
     print('Please input the robot rotation')
-    angle = float(input())
+    actions[1] = float(input())
 
     # Erase previous robot position
-    plt.scatter(loc[0], loc[1], c = 'white', s = 60 )
+    plt.scatter(robot_loc[0], robot_loc[1], c = 'white', s = 60 )
     plt.scatter(particles[:,0], particles[:,1], c = 'white', s = 60 )
 
-    #Update localization of the robot
-    loc = odometry_model(loc, vel, angle)
+    # Update localization of the robot
+    loc = odometry_model(robot_loc, actions[0], actions[1])
+
+    # PREDICT
+    predict(particles, actions)
 
     # Retrieving data from the laser
-    measures = laser_model(loc, landmarks)
+    measures = laser_model(robot_loc, landmarks)
+
+    # UPDATE
+    weights = update(measures,particles,landmarks)
+    print(weights)
+    
+    # UPDATED SET
+
+    # RESAMPLING
 
 
 
