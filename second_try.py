@@ -142,13 +142,24 @@ def create_particles(M):
     return particles
 
 
+# Funções que faltam:
+# Particle_filter(): Incluir tudo -> Tem que ser recursiva
+# Particle_filter_init(): Iniciar o algoritmo recursivo
+# Init_parameters(): Colocar tudo a zero -> Particulas, pesos
+# Ruídos -> Tanto no modelo do robot
+# Ruído -> Modelo do laser -> Vai definir os pesos
+# Resampling
+# Depois temos que ajustar: Nº de partículas e o resampling
+# Ver consistência do algoritmo, robustez, etc.
+
+
 """ Global Variables """
 
 #Number of particles
 M = 100
 
 
-""" Program """
+""" main() """
 
 # landmarks: Matrix of points that mark the 'walls' of our map 
 landmarks = create_map()
