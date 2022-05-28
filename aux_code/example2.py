@@ -10,8 +10,8 @@ import math
 
 import matplotlib.pyplot as plt
 import numpy as np
-
-from utils.angle import rot_mat_2d
+import utils as utils
+#from utils.angle import rot_mat_2d
 
 # Estimation parameter of PF
 Q = np.diag([0.2]) ** 2  # range error
@@ -190,7 +190,7 @@ def plot_covariance_ellipse(x_est, p_est):  # pragma: no cover
     x = [a * math.cos(it) for it in t]
     y = [b * math.sin(it) for it in t]
     angle = math.atan2(eig_vec[1, big_ind], eig_vec[0, big_ind])
-    fx = rot_mat_2d(angle) @ np.array([[x, y]])
+    fx = utils.angle.rot_mat_2d(angle) @ np.array([[x, y]])
     px = np.array(fx[:, 0] + x_est[0, 0]).flatten()
     py = np.array(fx[:, 1] + x_est[1, 0]).flatten()
     plt.plot(px, py, "--r")
