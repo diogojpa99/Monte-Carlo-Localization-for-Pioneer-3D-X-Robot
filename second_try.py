@@ -2,11 +2,11 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy
 from numpy.random import uniform
 from numpy.random import normal
 from math import cos, sin, sqrt, exp, pi
-
-
+from scipy import stats
 
 
 """ Functions """
@@ -125,7 +125,7 @@ def laser_model(robot_loc, landmarks):
     measures= np.empty([184,1])
     i = 0
     for measure in measures:
-        measures[i] = sqrt( pow(landmarks[i][0]*robot_loc[0], 2) + pow(landmarks[i][1]*robot_loc[1],2) )
+        measures[i] = sqrt( pow(landmarks[i][0]-robot_loc[0], 2) + pow(landmarks[i][1]-robot_loc[1],2) )
         i += 1
 
     return measures
@@ -138,8 +138,8 @@ def laser_model(robot_loc, landmarks):
 # Ouput:
 # 2D Array tha contains the localization of each particle (and its rotation)
 # particles[:,0] : x position
-# particles[:,0] : y position
-# particles[:,0] : rotation
+# particles[:,1] : y position
+# particles[:,2] : rotation
 def create_particles(M):
     
     particles = np.empty([M, 3])
@@ -161,11 +161,10 @@ def create_particles(M):
 # Set of particles in new positions 
 def predict(particles, actions):
 
-    i = 0
-    for particle in particles:
+    for i in range(M):
         model  = odometry_model(particles[i], actions[0], actions[1]).reshape((3,))   
         particles[i] = model + normal(loc=0.0, scale=1.0, size=3)
-        i += 1
+        
 
     return particles 
 
@@ -183,8 +182,8 @@ def predict(particles, actions):
 
 # normal_distribution():
 def normal_dist(x , mean , sd):
-    prob_density = (1/(sd*sqrt(2*pi)))*exp(-0.5*((x-mean)/sd)**2)
-    return prob_density
+    prob = (1/(sd*sqrt(2*pi)))*exp(-0.5*((x - mean)/sd)**2) 
+    return prob
 
 
 # update():
@@ -194,30 +193,57 @@ def update(measurments, particles, landmarks):
     # Distance from each particle to each landmark
     # We have 184 measures and M particles
     distances = np.empty([184,M])
-    noise = np.empty([184,M])
-    probs = np.empty([184,M])
+    #noise = np.empty([184,M])
+    #probs = np.empty([184,M])
     weights = np.empty([M,1])
+    #sd = np.empty([M,1])
+    #weights.fill(1.)
 
     for i in range (M):
         distances[:,i] = laser_model(particles[i], landmarks).reshape((184,))
-        noise[:,i] = measurments.reshape((184,)) - distances[:,i]
-            
+        #noise[:,i] = abs(measurments.reshape((184,)) - distances[:,i])
+
+
+    """
+    for i in range(M):
+        for j in range(184):
+            sd[i] = sqrt(pow(measurments[i]-distances[j][i],2)/184)
+    """
+
+    #The weights are the product of the likelihoods of the measurments  
     for i in range (M):
         for j in range (len(measurments)):
-            probs[j][i] = normal_dist(noise[j][i], mean = distances[j][i], sd = sqrt(pow(noise[j][i]-distances[j][i],2)))
-            print(probs[j][i])
+            #probs[j][i] = normal_dist(measurments[j], distances[j][i], sqrt(pow(measurments[i]-distances[j][i],2)))
+            #weights[i] *= normal_dist(measurments[j], distances[j][i], sqrt(pow(measurments[i]-distances[j][i],2)))
+            var = sqrt(pow(measurments[j]-distances[j][i],2))
+            weights[i] += exp(-0.5* pow(1/50,2) * pow( measurments[j] - distances[j][i], 2)) 
 
-    #The weights are the product of the likelihoods of the measurments 
-    for i in range (M):
-        weights[i] = np.prod(probs[:,i]) 
+    weights /= sum(weights) #Normalizar
 
     return weights
+
+
+# Resampling:
+def systematic_resample(weights):
+    N = len(weights)
+    positions = (np.arange(N) + np.random.random()) / N
+ 
+    indexes = np.zeros(N, 'i')
+    cumulative_sum = np.cumsum(weights)
+    i, j = 0, 0
+    while i < N and j<N:
+        if positions[i] < cumulative_sum[j]:
+            indexes[i] = j
+            i += 1
+        else:
+            j += 1
+    return indexes
 
 
 """ Global Variables """
 
 #Number of particles
-M = 100
+M = 300
 
 #Actions
 # action[0] : cmd_vel
@@ -272,10 +298,11 @@ while(1):
     plt.scatter(particles[:,0], particles[:,1], c = 'white', s = 60 )
 
     # Update localization of the robot
-    loc = odometry_model(robot_loc, actions[0], actions[1])
+    robot_loc = odometry_model(robot_loc, actions[0], actions[1])
 
     # PREDICT
-    predict(particles, actions)
+    particles = predict(particles, actions)
+    print(particles)
 
     # Retrieving data from the laser
     measures = laser_model(robot_loc, landmarks)
@@ -287,6 +314,10 @@ while(1):
     # UPDATED SET
 
     # RESAMPLING
+    indexes = systematic_resample(weights)
+    particles[:] = particles[indexes]
+    weights[:] = weights[indexes]
+    weights /= np.sum(weights)
 
 
 
