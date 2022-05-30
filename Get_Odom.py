@@ -2,7 +2,6 @@
 
 from time import sleep
 import rospy
-from std_msgs.msg import String
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Odometry
 
