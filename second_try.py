@@ -67,6 +67,15 @@ def create_map():
     return landmarks
 
 
+# validate_pos():
+def validate_pos(loc):
+
+    if( loc[0] < 50): loc[0]= 50
+    if( loc[0] > 500): loc[0] = 500
+    if( loc[1] < 50): loc[0]= 50
+    if( loc[1] > 500): loc[0] = 500
+
+    return loc
 
 # init_robot_pos():
 # initialize the robot position
@@ -299,10 +308,13 @@ while(1):
 
     # Update localization of the robot
     robot_loc = odometry_model(robot_loc, actions[0], actions[1])
+    robot_loc = validate_pos(robot_loc)
 
     # PREDICT
     particles = predict(particles, actions)
-    print(particles)
+    for i in range (M):
+        particles[i] = validate_pos(particles[i])
+
 
     # Retrieving data from the laser
     measures = laser_model(robot_loc, landmarks)
