@@ -4,6 +4,8 @@ from time import sleep
 import rospy
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Odometry
+from nav_msgs.srv import GetMap
+from occupancy_field import OccupancyField
 
 global my_data
 
@@ -17,7 +19,9 @@ def callback2(data):
 
 def listener_1():
     rospy.init_node('listener_new', anonymous=True)
-    rospy.Subscriber("pose", Odometry, callback1)
+    #rospy.Subscriber("pose", Odometry, callback1)
+    map_server = rospy.ServiceProxy('static_map', GetMap)
+    map = map_server().map
     #rospy.spin()
 
 def listener_2():
