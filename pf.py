@@ -86,7 +86,7 @@ class ParticleFilter:
         self.base_frame = "base_link"   # the frame of the robot base
         self.map_frame = "map"          # the name of the map coordinate frame
         self.odom_frame = "odom"        # the name of the odometry coordinate frame
-        self.scan_topic = "base_scan"        # the topic where we will get laser scans from
+        self.scan_topic = "scan"        # the topic where we will get laser scans from
 
         self.n_particles = 500          # the number of particles to use
 

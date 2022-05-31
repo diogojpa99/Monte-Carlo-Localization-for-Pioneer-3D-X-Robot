@@ -21,8 +21,10 @@ def callback2(data):
 def listener_1():
     rospy.init_node('listener_new', anonymous=True)
     #rospy.Subscriber("pose", Odometry, callback1)
-    map_server = rospy.Subscriber('map', OccupancyGrid, callback1)
+    # request the map from the map server, the map should be of type nav_msgs/OccupancyGrid
+    map_server = rospy.ServiceProxy('static_map', GetMap)
     map = map_server().map
+    # for now we have commented out the occupancy field initialization until you can successfully fetch the map
     occupancy_field = OccupancyField(map)
     #rospy.spin()
 
