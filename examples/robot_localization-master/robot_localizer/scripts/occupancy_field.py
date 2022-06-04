@@ -51,8 +51,7 @@ class OccupancyField(object):
                     occupied[curr, 1] = float(j)
                     curr += 1
         # use super fast scikit learn nearest neighbor algorithm
-        nbrs = NearestNeighbors(n_neighbors=1,
-                                algorithm="ball_tree").fit(occupied)
+        nbrs = NearestNeighbors(n_neighbors=1, algorithm="ball_tree").fit(occupied)
         distances, indices = nbrs.kneighbors(X)
 
         self.closest_occ = np.zeros((self.map.info.width, self.map.info.height))
