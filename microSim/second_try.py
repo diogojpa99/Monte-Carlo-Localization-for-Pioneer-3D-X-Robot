@@ -72,8 +72,8 @@ def validate_pos(loc):
 
     if( loc[0] < 50): loc[0]= 50
     if( loc[0] > 500): loc[0] = 500
-    if( loc[1] < 50): loc[0]= 50
-    if( loc[1] > 500): loc[0] = 500
+    if( loc[1] < 50): loc[1]= 50
+    if( loc[1] > 500): loc[1] = 500
 
     return loc
 
@@ -206,7 +206,7 @@ def update(measurments, particles, landmarks):
     #probs = np.empty([184,M])
     weights = np.empty([M,1])
     #sd = np.empty([M,1])
-    #weights.fill(1.)
+    weights.fill(1.)
 
     for i in range (M):
         distances[:,i] = laser_model(particles[i], landmarks).reshape((184,))
@@ -227,7 +227,7 @@ def update(measurments, particles, landmarks):
             var = sqrt(pow(measurments[j]-distances[j][i],2))
             weights[i] += exp(-0.5* pow(1/50,2) * pow( measurments[j] - distances[j][i], 2)) 
 
-    weights /= sum(weights) #Normalizar
+    weights /= np.sum(weights) #Normalizar
 
     return weights
 
@@ -309,6 +309,7 @@ while(1):
     # Update localization of the robot
     robot_loc = odometry_model(robot_loc, actions[0], actions[1])
     robot_loc = validate_pos(robot_loc)
+    print(robot_loc)
 
     # PREDICT
     particles = predict(particles, actions)

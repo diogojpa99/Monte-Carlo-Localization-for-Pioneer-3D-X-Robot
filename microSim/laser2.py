@@ -1,6 +1,6 @@
 import cv2 
 import numpy as np
-from matplotlib.pyplot import imshow
+from matplotlib.pyplot import imshow,show
 import math
 
 
@@ -91,8 +91,10 @@ class envio: # showing the data as a part of the map you got build the point clo
     return'''
 
 #-------------main---------
-img = cv2.imread('/home/goncalo/Desktop/Laser/image.png', cv2.IMREAD_GRAYSCALE)
-print(img.shape)
+img = cv2.imread('map1.png', cv2.IMREAD_GRAYSCALE)
+print(img)
+imshow(img)
+show()
 
 Map = np.array(img) # An array of occupancy grid 255 black (occupied) and 
 
