@@ -72,9 +72,7 @@ class ParticleFilter(object):
 
         # pose_listener responds to selection of a new approximate robot
         # location (for instance using rviz)
-        rospy.Subscriber("initialpose",
-                         PoseWithCovarianceStamped,
-                         self.update_initial_pose)
+        rospy.Subscriber("initialpose", PoseWithCovarianceStamped, self.update_initial_pose)
 
         # enable listening for and broadcasting coordinate transforms
         self.tf_listener = TransformListener()
@@ -174,9 +172,7 @@ class ParticleFilter(object):
         pose_particle_cloud = []
         for p in self.particle_cloud:
             pose_particle_cloud.append(p.as_pose())
-        self.particle_pub.publish(PoseArray(header=Header(stamp=rospy.Time.now(),
-                                            frame_id=self.map_frame),
-                                  poses=pose_particle_cloud))
+        self.particle_pub.publish(PoseArray(header=Header(stamp=rospy.Time.now(), frame_id=self.map_frame), poses=pose_particle_cloud))
 
 
         # doing shit based off best pose

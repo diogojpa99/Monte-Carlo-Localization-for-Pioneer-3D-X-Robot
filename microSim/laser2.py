@@ -42,8 +42,8 @@ class LaserSensor:
             x2, y2 = (x1 + self.Range * math.cos(angle), y1 - self.Range * math.sin(angle)) # get the final point of the range
             for i in range (0, 100): # calculate a point in the line segment until it intercepts something
                 u = i/100
-                x = int(x2* u + x1 *(1-u))
-                y = int(y2* u + y1 *(1-u))
+                x = int(x2* u + x1 *(1-u))#Get a x  between the laser range and the laser position
+                y = int(y2* u + y1 *(1-u))#Get a y  between the laser range and the laser position
                 if 0 < x < self.W and 0< y < self.H: # to see if the point is out of the map
                     if self.Map[x,y] == 255: #in 255 is where the walls are
                         distance = self.distance((x,y))
