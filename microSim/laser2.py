@@ -1,6 +1,6 @@
 import cv2 
 import numpy as np
-from matplotlib.pyplot import imshow
+from matplotlib.pyplot import imshow,show
 import math
 
 
@@ -65,9 +65,16 @@ class LaserSensor:
     return'''
 
 #-------------main---------
+<<<<<<< HEAD
 img = cv2.imread('/home/goncalo/Desktop/ist/SAut_project/microSim/image.png', cv2.IMREAD_GRAYSCALE)
 print(img)
 print(np.count_nonzero(img == 255))
+=======
+img = cv2.imread('map1.png', cv2.IMREAD_GRAYSCALE)
+print(img)
+imshow(img)
+show()
+>>>>>>> c3bbb1ea6bd9076aa48b943b4dc6734f8126df23
 
 Map = np.array(img) # An array of occupancy grid 255 black (occupied) and 
 
