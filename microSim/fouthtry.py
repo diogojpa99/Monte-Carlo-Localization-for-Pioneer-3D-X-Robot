@@ -24,7 +24,7 @@ def plotting(landmarks, robot_loc, particles):
 # create_map():
 # Creates an rectangular map using matix points.
 # Returns the matrix with the map
-def get_landmarks(map):
+'''def get_landmarks(map):
 
     # Our map is a matrix 184*2
     landmarks= np.zeros([np.count_nonzero(map == 255),2])
@@ -36,21 +36,21 @@ def get_landmarks(map):
     # We are going to fiil the matrix
    
     
-    return landmarks
+    return landmarks'''
 
 
 # validate_pos():
-def validate_pos(loc,map, before_loc):
+def validate_pos(loc,map, before_loc, robot_or_not):
     count = 0 # global variable, if the robot doesn change position the algoritmo doesn do resample
     if( loc[0] < 0): loc[0]=1
     if( loc[0] > Map.shape[0]): loc[0] = Map.shape[0] -1
     if( loc[1] < 0): loc[1]= 1
     if( loc[1] > Map.shape[0]): loc[1] = Map.shape[0] -1
     if(Map[int(loc[0]),int(loc[1])]==255): 
-        count = 1
         loc[0] = before_loc[0]
         loc[1] = before_loc[1]
         loc[2] = before_loc[2]
+        if robot_or_not == 1 : count = 1
 
     return loc 
 
@@ -280,7 +280,7 @@ def systematic_resample(weights):
 """ Global Variables """
 
 #Number of particles
-M = 100
+M = 400
 
 #Actions
 # action[0] : cmd_vel
@@ -348,14 +348,13 @@ while(1):
 
     before_robot_loc = robot_loc
     robot_loc = odometry_model(robot_loc, actions[0], actions[1])
-    robot_loc = validate_pos(robot_loc,Map, before_robot_loc)
+    robot_loc = validate_pos(robot_loc,Map, before_robot_loc,1)
 
     # PREDICT
-
     before_particles = particles
     particles = predict(particles, actions)
     for i in range (M):
-        particles[i] = validate_pos(particles[i], Map, before_particles[i])
+        particles[i] = validate_pos(particles[i], Map, before_particles[i], 0)
 
 
     # Retrieving data from the laser
