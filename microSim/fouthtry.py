@@ -40,19 +40,20 @@ def plotting(landmarks, robot_loc, particles):
 
 
 # validate_pos():
-def validate_pos(loc,map, before_loc, robot_or_not):
+def validate_pos(loc, map ,before_loc, robot_or_not):
     count = 0 # global variable, if the robot doesn change position the algoritmo doesn do resample
     if( loc[0] < 0): loc[0]=1
     if( loc[0] > Map.shape[0]): loc[0] = Map.shape[0] -1
     if( loc[1] < 0): loc[1]= 1
-    if( loc[1] > Map.shape[0]): loc[1] = Map.shape[0] -1
+    if( loc[1] > Map.shape[1]): loc[1] = Map.shape[1] -1
     if(Map[int(loc[0]),int(loc[1])]==255): 
         loc[0] = before_loc[0]
         loc[1] = before_loc[1]
         loc[2] = before_loc[2]
-        if robot_or_not == 1 : count = 1
+        if robot_or_not == 1 : 
+            count = 1
 
-    return loc 
+    return loc, count
 
 # init_robot_pos():
 # initialize the robot position
@@ -253,9 +254,10 @@ def update(measurments, particles, map):
             #var = sqrt(pow(measurments-distances,2))
         for j in range (len(measurments)):
             weights[i] += (exp(-0.5* pow(1/50,2)) * pow((measurments[j]- particule_dist[j]), 2))
-        print(weights[i], '', particles[i][0],'', particles[i][1], '', robot_loc[0],'', robot_loc[1])
+        #print(weights[i], '', particles[i][0],'', particles[i][1], '', robot_loc[0],'', robot_loc[1])
 
     weights /= sum(weights) #Normalizar
+
 
     return weights
 
@@ -280,7 +282,7 @@ def systematic_resample(weights):
 """ Global Variables """
 
 #Number of particles
-M = 400
+M = 500
 
 #Actions
 # action[0] : cmd_vel
@@ -348,13 +350,13 @@ while(1):
 
     before_robot_loc = robot_loc
     robot_loc = odometry_model(robot_loc, actions[0], actions[1])
-    robot_loc = validate_pos(robot_loc,Map, before_robot_loc,1)
+    robot_loc, illegal_position = validate_pos(robot_loc, Map, before_robot_loc,1)
 
     # PREDICT
     before_particles = particles
     particles = predict(particles, actions)
     for i in range (M):
-        particles[i] = validate_pos(particles[i], Map, before_particles[i], 0)
+        particles[i], illegal_position = validate_pos(particles[i], Map, before_particles[i], 0)
 
 
     # Retrieving data from the laser
@@ -369,7 +371,8 @@ while(1):
     # UPDATED SET
 
     # RESAMPLING
-    if count == 0:
+    print(illegal_position)
+    if illegal_position == 0:
         indexes = systematic_resample(weights)
         particles[:] = particles[indexes]
         weights[:] = weights[indexes]
