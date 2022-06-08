@@ -153,8 +153,8 @@ class LaserSensor:
         x1, y1 = self.position[0], self.position[1]
         for angle in np.linspace(math.radians(self.initial_angle) ,math.radians(self.initial_angle)+math.pi/2 , 18, False):
             x2, y2 = (x1 + self.Range * math.cos(angle), y1 - self.Range * math.sin(angle)) # get the final point of the range
-            for i in range (0, 1000): # calculate a point in the line segment until it intercepts something
-                u = i/1000
+            for i in range (0, 1200): # calculate a point in the line segment until it intercepts something
+                u = i/1200
                 x = int(x2* u + x1 *(1-u))#Get a x  between the laser range and the laser position
                 y = int(y2* u + y1 *(1-u))#Get a y  between the laser range and the laser position
                 if 0 <= x < self.W and 0<= y < self.H: # to see if the point is out of the map
@@ -164,10 +164,10 @@ class LaserSensor:
                         #output.append(self.position)
                         data.append(output) #store the measurments
                         break
-                    if i == 999:
-                        data.append(1200) 
+                    if i == 1199:
+                        data.append(1400) 
                 else:
-                    data.append(1200)
+                    data.append(1400)
                     break
         #print(data)
         return data
@@ -303,9 +303,11 @@ actions = np.empty([2,1])
 #GET MAP IN AN OCCUPANCY GRID
 img = cv2.imread('/home/goncalo/Desktop/ist/SAut_project/microSim/image.png', cv2.IMREAD_GRAYSCALE)
 Map = np.array(img)
-count=0
+#print(Map)
+print(Map)
 
 # loc: Localization of the robot
+
 robot_loc = init_robot_pos()
 
 print(robot_loc[0],'', robot_loc[1])
