@@ -24,6 +24,7 @@ def import_map(file_name):
     map = np.array(grayscale)
     print('map:',map.shape)
 
+    # For 'map.pgm'
     # 250 -> Outside
     # 254 -> Free space
     # 0 -> Wall
@@ -64,6 +65,15 @@ def odometry_model(prev_loc, vel, angle):
 
     return loc 
 
+def draw_robot(map, robot_loc, color):
+    map[int(robot_loc[0]),int(robot_loc[1])] = color
+    map[int(robot_loc[0])+1,int(robot_loc[1])+1] = color
+    map[int(robot_loc[0])-1,int(robot_loc[1])-1] = color
+    map[int(robot_loc[0])+1,int(robot_loc[1])-1] = color
+    map[int(robot_loc[0])-1,int(robot_loc[1])+1] = color
+
+    return map
+
 
 
 """ Global Variables """
@@ -99,7 +109,7 @@ while(1):
     #plotting
     #plt.scatter(robot_loc[0], robot_loc[1], marker = (3, 0, robot_loc[0]), c = 'red' )
     if map[int(robot_loc[0]),int(robot_loc[1])] == 254:
-        map[int(robot_loc[0]),int(robot_loc[1])] = 0
+        map = draw_robot(map, robot_loc, 0)
     plt.imshow(map)
     plt.show() 
 
@@ -109,7 +119,9 @@ while(1):
     print('Please input the robot rotation')
     actions[1] = float(input())
 
-
+    #Clean the map
+    if map[int(robot_loc[0]),int(robot_loc[1])] == 0:
+        map = draw_robot(map, robot_loc, 254)
     # Update localization of the robot
     robot_loc = odometry_model(robot_loc, actions[0], actions[1])
     print("Robot_Loc:",robot_loc)
