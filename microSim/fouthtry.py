@@ -1,4 +1,8 @@
+#!/usr/bin/env python3
 
+import rospy
+
+from cmath import inf
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy
@@ -12,10 +16,7 @@ import math
 
 """ Functions """
 
-
-# plotting():
-def plotting(landmarks, robot_loc, particles):
-    plt.scatter(landmarks[0],landmarks[1], c = 'black')
+def plotting( robot_loc, particles):
     plt.scatter(robot_loc[0], robot_loc[1], marker = 'x', c = 'red' )
     plt.scatter(particles[:,0], particles[:,1], marker = '2', c = 'green', s = 10 )
     plt.show()
@@ -26,7 +27,7 @@ def plotting(landmarks, robot_loc, particles):
 # create_map():
 # Creates an rectangular map using matix points.
 # Returns the matrix with the map
-def get_landmarks(map):
+'''def get_landmarks(map):
 
     # Our map is a matrix 184*2
     landmarks= np.zeros([np.count_nonzero(map == 255),2])
@@ -38,18 +39,24 @@ def get_landmarks(map):
     # We are going to fiil the matrix
    
     
-    return landmarks
+    return landmarks'''
 
 
 # validate_pos():
-def validate_pos(loc):
+def validate_pos(loc, map ,before_loc, robot_or_not):
+    count = 0 # global variable, if the robot doesn change position the algoritmo doesn do resample
+    if( loc[0] < 0): loc[0]=1
+    if( loc[0] > Map.shape[0]): loc[0] = Map.shape[0] -1
+    if( loc[1] < 0): loc[1]= 1
+    if( loc[1] > Map.shape[1]): loc[1] = Map.shape[1] -1
+    if(Map[int(loc[0]),int(loc[1])]==255): 
+        loc[0] = before_loc[0]
+        loc[1] = before_loc[1]
+        loc[2] = before_loc[2]
+        if robot_or_not == 1 : 
+            count = 1
 
-    if( loc[0] < 50): loc[0]= 50
-    if( loc[0] > 500): loc[0] = 500
-    if( loc[1] < 50): loc[0]= 50
-    if( loc[1] > 500): loc[0] = 500
-
-    return loc
+    return loc, count
 
 # init_robot_pos():
 # initialize the robot position
@@ -57,10 +64,12 @@ def validate_pos(loc):
 # loc[1] : y variable
 # loc[2] : angle
 def init_robot_pos():
+    
     loc = np.zeros(3, int)
-    loc[0] = int(2)
-    loc[1] = int(2)
-    loc[2] = 0
+    while(Map[loc[0], loc[1]] == 255):
+        loc[0] = np.random.randint(Map.shape[0], size=1)
+        loc[1] = np.random.randint(Map.shape[1], size=1)
+        loc[2] = 0
 
     return loc
 
@@ -100,18 +109,6 @@ def odometry_model(prev_loc, vel, angle):
 # Output: Euclidean distance from the robot to each of the partiles 
 
 # TEMOS QUE VER ESTA PARTE MELHOR
-'''def laser_model(robot_loc, landmarks):
-    
-    
-    #Not sure se isto está bem feito, mas a ideia é esta
-    #Provavelmente não será necessário calcular a medida de todas.
-    measures= np.empty([184,1])
-    i = 0
-    for measure in measures:
-        measures[i] = sqrt( pow(landmarks[i][0]-robot_loc[0], 2) + pow(landmarks[i][1]-robot_loc[1],2) )
-        i += 1
-
-    return measures'''
 
 def uncertainty_add(distance, angle, sigma): #create noise
 
@@ -125,15 +122,13 @@ def uncertainty_add(distance, angle, sigma): #create noise
 
 class LaserSensor:
 
-    def __init__( self, Range, map, robot_loc, uncertainty):
+    def __init__( self, Range, map, loc, uncertainty):
 
         self.Range = Range
-        self.speed = 4 #rounds per second
         self.sigma = np.array([uncertainty[0], uncertainty[1]]) # sensor measurment noise, noise in the angle and range
-        self.position = (robot_loc[0],robot_loc[1]) # position of the robot/laser
-        print(map.shape[0])
-        self.W = map.shape[1]
-        self.H = map.shape[0]
+        self.position = (loc[0],loc[1]) # position of the robot/laser
+        self.W = map.shape[0]
+        self.H = map.shape[1]
         #self.Map = map
         self.sensedObstacles = []
 
@@ -148,40 +143,28 @@ class LaserSensor:
     def laser_model(self, map):
 
         data = []
-        count=0
+        
         x1, y1 = self.position[0], self.position[1]
-        #print(x1, '' , y1)
-        for angle in np.linspace(0 ,math.pi , 10, False):
+        for angle in np.linspace(0 ,math.pi/3 , 10, False):
             x2, y2 = (x1 + self.Range * math.cos(angle), y1 - self.Range * math.sin(angle)) # get the final point of the range
-            #print(x2, '' , y2)
             for i in range (0, 100): # calculate a point in the line segment until it intercepts something
                 u = i/100
                 x = int(x2* u + x1 *(1-u))#Get a x  between the laser range and the laser position
                 y = int(y2* u + y1 *(1-u))#Get a y  between the laser range and the laser position
-                #print(x, '' , y)
-                
-                #print(i)
-                #print(map)
-                if (x < 0) or (y < 0):
-                    break
-
-                if 0 < x < self.W and 0< y < self.H: # to see if the point is out of the map
-                    #print(map[x,y])
-                    if map[x,y] == 255: #in 255 is where the walls are
+                if 0 <= x < self.W and 0<= y < self.H: # to see if the point is out of the map
+                    if map[x,y] == 255 : #in 255 is where the walls are                  
                         distance = self.distance((x,y))
                         output = uncertainty_add(distance, angle, self.sigma)
                         #output.append(self.position)
-                        count=count+1
                         data.append(output) #store the measurments
                         break
-        print(count)
-        #print('POOOOORCA')
+                    if i == 99:
+                        data.append(1200) 
+                else:
+                    data.append(1200)
+                    break
         #print(data)
-        if len(data) > 0 :
-            return data
-        else:
-            return False
-
+        return data
 
 
 # create_particles():
@@ -196,8 +179,8 @@ class LaserSensor:
 def create_particles(M):
     
     particles = np.empty([M, 3])
-    particles[:, 0] = uniform(50, 500, size = M)
-    particles[:, 1] = uniform(50, 500, size = M)
+    particles[:, 0] = uniform(0, 600, size = M)
+    particles[:, 1] = uniform(0, 1200, size = M)
     particles[:, 2] = uniform(0, 360, size = M)
     
     return particles
@@ -245,15 +228,14 @@ def update(measurments, particles, map):
 
     # Distance from each particle to each landmark
     # We have 184 measures and M particles
-    distances = np.zeros([184,M])
+    #distances = np.zeros([184,M])
     #noise = np.empty([184,M])
     #probs = np.empty([184,M])
-    weights = np.zeros([M,1])
+    weights = np.zeros(M)
     #sd = np.empty([M,1])
     #weights.fill(1.)
+    particule_dist =np.zeros(10)
 
-    
-    distances = laser.laser_model(map)
     #print(distances.s)
     #print(measurments.shape)
         #noise[:,i] = abs(measurments.reshape((184,)) - distances[:,i])
@@ -267,13 +249,18 @@ def update(measurments, particles, map):
 
     #The weights are the product of the likelihoods of the measurments  
     for i in range (M):
-        for j in range (len(measurments)):
+        Laser = LaserSensor(1200, map, particles[i], uncertainty=(0.5, 0.01))
+        particule_dist = Laser.laser_model(map)
+        #for j in range (len(measurments)):
             #probs[j][i] = normal_dist(measurments[j], distances[j][i], sqrt(pow(measurments[i]-distances[j][i],2)))
             #weights[i] *= normal_dist(measurments[j], distances[j][i], sqrt(pow(measurments[i]-distances[j][i],2)))
-            var = sqrt(pow(measurments[j]-distances[j][i],2))
-            weights[i] += exp(-0.5* pow(1/50,2) * pow( measurments[j] - distances[j][i], 2)) 
+            #var = sqrt(pow(measurments-distances,2))
+        for j in range (len(measurments)):
+            weights[i] += (exp(-0.5* pow(1/50,2)) * pow((measurments[j]- particule_dist[j]), 2))
+        #print(weights[i], '', particles[i][0],'', particles[i][1], '', robot_loc[0],'', robot_loc[1])
 
     weights /= sum(weights) #Normalizar
+
 
     return weights
 
@@ -298,7 +285,7 @@ def systematic_resample(weights):
 """ Global Variables """
 
 #Number of particles
-M = 300
+M = 500
 
 #Actions
 # action[0] : cmd_vel
@@ -307,23 +294,18 @@ actions = np.empty([2,1])
 
 
 """ main() """
+#GET MAP IN AN OCCUPANCY GRID
 img = cv2.imread('/home/goncalo/Desktop/ist/SAut_project/microSim/image.png', cv2.IMREAD_GRAYSCALE)
-print(img)
-
 Map = np.array(img)
-#print(np.count_nonzero(Map == 255))
-# landmarks: Matrix of points that mark the 'walls' of our map 
-landmarks = get_landmarks(Map)
+count=0
 
 # loc: Localization of the robot
 robot_loc = init_robot_pos()
-#print(robot_loc)
-x = robot_loc[0]
-y = robot_loc[1]
-if Map[x][y]==0:
-    print('SIMMMMM')
+
+print(robot_loc[0],'', robot_loc[1])
 
 #Activationg interactive mode
+
 plt.ion()
 
 
@@ -341,48 +323,60 @@ plt.ion()
 
 
 #Create particles
-laser = LaserSensor(200, Map, robot_loc, uncertainty=(0.5, 0.01))
+
+laser = LaserSensor(1200, Map, robot_loc, uncertainty=(0.5, 0.01))
 particles = create_particles(M)
 
 #Create weights
-weights = np.empty([M,1])
+
+weights = np.zeros([M,1])
 
 while(1):    
 
     # Plotting
-    plotting(Map, robot_loc, particles)
+
+    plotting( robot_loc, particles)
     
     #Getting info from the terminal
+
     print('Please input the robot velocity:')
     actions[0] = float(input())
     print('Please input the robot rotation')
     actions[1] = float(input())
 
     # Erase previous robot position
+
     plt.scatter(robot_loc[0], robot_loc[1], c = 'white', s = 60 )
     plt.scatter(particles[:,0], particles[:,1], c = 'white', s = 60 )
 
     # Update localization of the robot
-    robot_loc = odometry_model(robot_loc, actions[0], actions[1])
-    robot_loc = validate_pos(robot_loc)
 
-    # PREDICT
-    particles = predict(particles, actions)
-    for i in range (M):
-        particles[i] = validate_pos(particles[i])
+    before_robot_loc = robot_loc
+    robot_loc = odometry_model(robot_loc, actions[0], actions[1])
+    robot_loc, illegal_position = validate_pos(robot_loc, Map, before_robot_loc,1)
+    
+    if illegal_position == 0:
+        # PREDICT
+        before_particles = particles
+        particles = predict(particles, actions)
+        for i in range (M):
+            particles[i], illegal_position = validate_pos(particles[i], Map, before_particles[i], 0)
 
 
     # Retrieving data from the laser
-    measures = laser.laser_model(Map)
+
+        measures = laser.laser_model(Map)
 
     # UPDATE
-    weights = update(measures,particles, Map)
+
+        weights = update(measures,particles, Map)
     #print(weights)
     
     # UPDATED SET
 
     # RESAMPLING
-    indexes = systematic_resample(weights)
-    particles[:] = particles[indexes]
-    weights[:] = weights[indexes]
-    weights /= np.sum(weights)
+    
+        indexes = systematic_resample(weights)
+        particles[:] = particles[indexes]
+        weights[:] = weights[indexes]
+        weights /= np.sum(weights)

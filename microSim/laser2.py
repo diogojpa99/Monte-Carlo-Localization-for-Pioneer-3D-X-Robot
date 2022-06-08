@@ -56,32 +56,6 @@ class LaserSensor:
         else:
             return False
 
-class envio: # showing the data as a part of the map you got build the point cloud map --> represented by a list of 2d cordinates
-
-    def AD2pos(self, distance, angle, robotPosition):
-        x = distance * math.cos(angle)+ robotPosition[0]
-        y = -distance * math.sin(angle)+ robotPosition[1]
-        return (int(x), int(y))
-
-    def dataStorage(self, data):
-        self.pointCloud=[]
-        i = 0
-        print(len(data))
-        for element in data:
-            point = self.AD2pos(element[0],element[1],element[2])
-            if point not in self.pointCloud:
-                i = i +1
-                self.pointCloud.append(point)
-        print(i)
-    def show_sensorData(self, map):
-        Map_sensor = np.zeros([600,1200])
-        #print()
-        for points in self.pointCloud:
-            print(self.pointCloud)
-            #print(points[0])
-            Map_sensor[points] = 1
-            print(map[points])
-
 '''def plotting(map ):
 
     plt.scatter(map, c = 'black')
@@ -91,15 +65,20 @@ class envio: # showing the data as a part of the map you got build the point clo
     return'''
 
 #-------------main---------
+<<<<<<< HEAD
+img = cv2.imread('/home/goncalo/Desktop/ist/SAut_project/microSim/image.png', cv2.IMREAD_GRAYSCALE)
+print(img)
+print(np.count_nonzero(img == 255))
+=======
 img = cv2.imread('map1.png', cv2.IMREAD_GRAYSCALE)
 print(img)
 imshow(img)
 show()
+>>>>>>> c3bbb1ea6bd9076aa48b943b4dc6734f8126df23
 
 Map = np.array(img) # An array of occupancy grid 255 black (occupied) and 
 
 laser = LaserSensor(200, Map,uncertainty=(0.5, 0.01) )
-env = envio()
 while(1):
     print('Position x')
     x = int(input())
@@ -108,6 +87,4 @@ while(1):
     laser.position = [x,y]
     sensor_data = laser.sense_obstacles()
     print(sensor_data)
-    env.dataStorage(sensor_data)
-    env.show_sensorData(Map)
     #plotting(Map)
