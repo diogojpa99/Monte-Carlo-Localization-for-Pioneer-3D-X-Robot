@@ -295,7 +295,7 @@ actions = np.empty([2,1])
 
 """ main() """
 #GET MAP IN AN OCCUPANCY GRID
-img = cv2.imread('/home/goncalo/Desktop/ist/SAut_project/microSim/image.png', cv2.IMREAD_GRAYSCALE)
+img = cv2.imread('image.png', cv2.IMREAD_GRAYSCALE)
 Map = np.array(img)
 count=0
 
