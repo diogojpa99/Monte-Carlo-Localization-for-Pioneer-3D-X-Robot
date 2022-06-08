@@ -17,9 +17,12 @@ import math
 """ Functions """
 
 def plotting( robot_loc, particles):
+
     plt.scatter(robot_loc[0], robot_loc[1], marker = 'x', c = 'red' )
     plt.scatter(particles[:,0], particles[:,1], marker = '2', c = 'green', s = 10 )
-    plt.show()
+    #plt.imshow(Map)
+    #plt.show()
+   
 
     return
 
@@ -69,6 +72,7 @@ def init_robot_pos():
     while(Map[loc[0], loc[1]] == 255):
         loc[0] = np.random.randint(Map.shape[0], size=1)
         loc[1] = np.random.randint(Map.shape[1], size=1)
+        print(loc[0], '', loc[1],'', Map[loc[0], loc[1]])
         loc[2] = 0
 
     return loc
@@ -127,8 +131,10 @@ class LaserSensor:
         self.Range = Range
         self.sigma = np.array([uncertainty[0], uncertainty[1]]) # sensor measurment noise, noise in the angle and range
         self.position = (loc[0],loc[1]) # position of the robot/laser
+        self.initial_angle = loc[2] # The first line of the laser begins with the orientaion of the robot 
         self.W = map.shape[0]
         self.H = map.shape[1]
+
         #self.Map = map
         self.sensedObstacles = []
 
@@ -145,10 +151,10 @@ class LaserSensor:
         data = []
         
         x1, y1 = self.position[0], self.position[1]
-        for angle in np.linspace(0 ,math.pi/3 , 10, False):
+        for angle in np.linspace(math.radians(self.initial_angle) ,math.radians(self.initial_angle)+math.pi/2 , 18, False):
             x2, y2 = (x1 + self.Range * math.cos(angle), y1 - self.Range * math.sin(angle)) # get the final point of the range
-            for i in range (0, 100): # calculate a point in the line segment until it intercepts something
-                u = i/100
+            for i in range (0, 1000): # calculate a point in the line segment until it intercepts something
+                u = i/1000
                 x = int(x2* u + x1 *(1-u))#Get a x  between the laser range and the laser position
                 y = int(y2* u + y1 *(1-u))#Get a y  between the laser range and the laser position
                 if 0 <= x < self.W and 0<= y < self.H: # to see if the point is out of the map
@@ -158,7 +164,7 @@ class LaserSensor:
                         #output.append(self.position)
                         data.append(output) #store the measurments
                         break
-                    if i == 99:
+                    if i == 999:
                         data.append(1200) 
                 else:
                     data.append(1200)
@@ -285,7 +291,7 @@ def systematic_resample(weights):
 """ Global Variables """
 
 #Number of particles
-M = 500
+M = 1000
 
 #Actions
 # action[0] : cmd_vel
@@ -354,7 +360,7 @@ while(1):
     before_robot_loc = robot_loc
     robot_loc = odometry_model(robot_loc, actions[0], actions[1])
     robot_loc, illegal_position = validate_pos(robot_loc, Map, before_robot_loc,1)
-    
+    print(illegal_position)
     if illegal_position == 0:
         # PREDICT
         before_particles = particles
