@@ -13,7 +13,7 @@ import math
 
 """ Functions """
 
-def plotting(landmarks, robot_loc, particles):
+def plotting( robot_loc, particles):
     plt.scatter(robot_loc[0], robot_loc[1], marker = 'x', c = 'red' )
     plt.scatter(particles[:,0], particles[:,1], marker = '2', c = 'green', s = 10 )
     plt.show()
@@ -332,7 +332,7 @@ while(1):
 
     # Plotting
 
-    plotting(Map, robot_loc, particles)
+    plotting( robot_loc, particles)
     
     #Getting info from the terminal
 
@@ -351,28 +351,28 @@ while(1):
     before_robot_loc = robot_loc
     robot_loc = odometry_model(robot_loc, actions[0], actions[1])
     robot_loc, illegal_position = validate_pos(robot_loc, Map, before_robot_loc,1)
-
-    # PREDICT
-    before_particles = particles
-    particles = predict(particles, actions)
-    for i in range (M):
-        particles[i], illegal_position = validate_pos(particles[i], Map, before_particles[i], 0)
+    
+    if illegal_position == 0:
+        # PREDICT
+        before_particles = particles
+        particles = predict(particles, actions)
+        for i in range (M):
+            particles[i], illegal_position = validate_pos(particles[i], Map, before_particles[i], 0)
 
 
     # Retrieving data from the laser
 
-    measures = laser.laser_model(Map)
+        measures = laser.laser_model(Map)
 
     # UPDATE
 
-    weights = update(measures,particles, Map)
+        weights = update(measures,particles, Map)
     #print(weights)
     
     # UPDATED SET
 
     # RESAMPLING
-    print(illegal_position)
-    if illegal_position == 0:
+    
         indexes = systematic_resample(weights)
         particles[:] = particles[indexes]
         weights[:] = weights[indexes]
