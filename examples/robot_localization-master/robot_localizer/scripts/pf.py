@@ -104,7 +104,7 @@ class ParticleFilter(object):
         Creates initial particle cloud based on robot pose estimate position
         """
         self.particle_cloud = []
-        angle_variance = math.pi/10  # POint the points in the general direction of the robot
+        angle_variance = math.pi/10  # Point the points in the general direction of the robot
         x_cur = xy_theta[0]
         y_cur = xy_theta[1]
         theta_cur = self.transform_helper.angle_normalize(xy_theta[2])
@@ -177,7 +177,7 @@ class ParticleFilter(object):
 
         # doing shit based off best pose
         best_pose_quat = max(self.particle_cloud, key=attrgetter('w')).as_pose()
-        #self.best_particle_pub.publish(header=Header(stamp=rospy.Time.now(), frame_id=self.map_frame), pose=best_pose_quat)
+        self.best_particle_pub.publish(header=Header(stamp=rospy.Time.now(), frame_id=self.map_frame), pose=best_pose_quat)
 
     def update_particles_with_odom(self, msg):
         """ Update the particles using the newly given odometry pose.
@@ -201,7 +201,7 @@ class ParticleFilter(object):
 
         # TODO: FIX noise incorporation into movement.
 
-        min_travel = 0.2
+        min_travel = 0.25
         xy_spread = 0.02 / min_travel  # More variance with driving forward
         theta_spread = .005 / min_travel
 
@@ -339,14 +339,11 @@ class ParticleFilter(object):
             return
 
         # calculate pose of laser relative to the robot base
-        p = PoseStamped(header=Header(stamp=rospy.Time(0),
-                                      frame_id=msg.header.frame_id))
+        p = PoseStamped(header=Header(stamp=rospy.Time(0), frame_id=msg.header.frame_id))
         self.laser_pose = self.tf_listener.transformPose(self.base_frame, p)
 
         # find out where the robot thinks it is based on its odometry
-        p = PoseStamped(header=Header(stamp=msg.header.stamp,
-                                      frame_id=self.base_frame),
-                        pose=Pose())
+        p = PoseStamped(header=Header(stamp=msg.header.stamp, frame_id=self.base_frame), pose=Pose())
         # grab from listener & store the the odometry pose in a more convenient format (x,y,theta)
         self.odom_pose = self.tf_listener.transformPose(self.odom_frame, p)
         new_odom_xy_theta = self.transform_helper.convert_pose_to_xy_and_theta(self.odom_pose.pose)

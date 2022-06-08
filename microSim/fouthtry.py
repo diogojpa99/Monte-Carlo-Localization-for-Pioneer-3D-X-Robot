@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+
+import rospy
 
 from cmath import inf
 import numpy as np
