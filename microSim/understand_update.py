@@ -235,7 +235,7 @@ def update(measurments, particles):
     distances = np.empty([N_measures,M])
     distances.fill(0.)
     weights = np.empty([M,1])
-    weights.fill(1./M)
+    weights.fill(1.)
     sd = 0.75
 
     for i in range (M):
@@ -243,17 +243,20 @@ def update(measurments, particles):
 
     #The weights are the product of the likelihoods of the measurments  
     for i in range (M):
-        for j in range (len(measurments)):
+        for j in range (N_measures):
             #print("error:",abs(measurments[j] - distances[j][i]))
+            #weights[i] *= normal_dist(measurments[j], distances[j][i], 0.5)
             weights[i] += exp(-0.5* pow(1/sd,2) * pow( measurments[j] - distances[j][i], 2)) 
 
-    weights /= np.sum(weights) #Normalizar
-    
-    
-    #print(weights)
-    
+    weights /= np.sum(weights) #Normalizar    
+    print(weights)
 
     return weights
+
+# normal_distribution():
+def normal_dist(x , mean , sd):
+    prob = (1/(sd*sqrt(2*pi)))*exp(-0.5*((x - mean)/sd)**2) 
+    return prob
 
 # Resampling:
 def systematic_resample(weights):

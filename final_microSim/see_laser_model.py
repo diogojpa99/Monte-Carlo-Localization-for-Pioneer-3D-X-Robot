@@ -57,11 +57,7 @@ def line_intersection(line1, line2):
 
         return -1
 
-    if (validate_pos((x,y)) == 0):
-        return -1
-
-    #Adicionar ruído
-    return (x + np.random.normal(loc=0.0, scale=0.1, size=None) ,y + np.random.normal(loc=0.0, scale=0.1, size=None))
+    return (x,y)
 
 
 # init_robot_pos():
@@ -101,7 +97,7 @@ def odometry_model(prev_loc, vel, angle):
 # validate_pos():
 def validate_pos(loc):
 
-    if loc[0] < 0 or loc[0] > 10 or loc[1] < 0 or loc[1] > 10:
+    if loc[0] < 0 or loc[0] > 10.1 or loc[1] < 0 or loc[1] > 10.1:
         return 0
     else:
         return 1
@@ -175,21 +171,27 @@ def laser_model(loc):
         left =np.array(line_intersection(left_wall, ray))
         right =np.array(line_intersection(right_wall, ray))
         
-        if (line_intersection(up_wall, ray) != -1):
-            plt.scatter(up[0], up[1], c = '#d62728' )
-            print(up)
+        if (line_intersection(up_wall, ray) != -1 and validate_pos(up) == 1):
+            x2 = up[0] + np.random.normal(loc=0.0, scale=0.07, size=None) #Adding noise two the measures
+            y2 = up[1] + np.random.normal(loc=0.0, scale=0.07, size=None)
+            plt.scatter(x2, y2, c = '#d62728' )
 
-        if (line_intersection(down_wall, ray) != -1):
-            plt.scatter(down[0], down[1], c = '#d62728' )
-            print(down)
 
-        if (line_intersection(left_wall, ray) != -1):
-            plt.scatter(left[0], left[1], c = '#d62728' )
-            print(left)
+        if (line_intersection(down_wall, ray) != -1 and validate_pos(down) == 1 ):
+            x2 = down[0] + np.random.normal(loc=0.0, scale=0.07, size=None)
+            y2 = down[1] + np.random.normal(loc=0.0, scale=0.07, size=None)
+            plt.scatter(x2, y2, c = '#d62728' )
 
-        if ( line_intersection(right_wall, ray) != -1):
-            plt.scatter(right[0], right[1], c = '#d62728' )
-            print(right)
+
+        if (line_intersection(left_wall, ray) != -1 and validate_pos(left) == 1 ):
+            x2 = left[0] + np.random.normal(loc=0.0, scale=0.07, size=None)
+            y2 = left[1] + np.random.normal(loc=0.0, scale=0.07, size=None)
+            plt.scatter(x2, y2, c = '#d62728' )
+ 
+        if ( line_intersection(right_wall, ray) != -1 and validate_pos(right) == 1):
+            x2 = right[0] + np.random.normal(loc=0.0, scale=0.07, size=None)
+            y2 = right[1] + np.random.normal(loc=0.0, scale=0.07, size=None)
+            plt.scatter(x2, y2, c = '#d62728' )
         
         radius += 2
     
