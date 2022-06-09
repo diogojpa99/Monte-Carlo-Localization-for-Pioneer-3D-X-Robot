@@ -76,6 +76,7 @@ def draw_robot(map, robot_loc, color):
 
 
 
+
 """ Global Variables """
 
 #Number of particles
