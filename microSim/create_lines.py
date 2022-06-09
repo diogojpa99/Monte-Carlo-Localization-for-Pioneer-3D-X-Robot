@@ -110,7 +110,7 @@ def validate_pos(loc):
 # If particle leaves the map they are spread
 def validate_particle(loc):
 
-    if loc[0] < 0 or loc[0] > 10 or loc[1] < 0 or loc[1] > 10:
+    if loc[0] < -0.25 or loc[0] > 10.25 or loc[1] < -0.25 or loc[1] > 10.25:
         loc[0] = loc[1] = uniform(0, 10, size = 1) 
 
     return loc

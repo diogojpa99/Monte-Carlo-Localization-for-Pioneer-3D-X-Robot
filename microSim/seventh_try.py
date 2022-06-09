@@ -33,7 +33,7 @@ N_measures = 270
 actions = np.empty([2,1])
 
 #Errors
-errors = np.empty([upper + 15,3])
+errors = np.empty([20,3])
 
 
 
@@ -193,29 +193,21 @@ def laser_model(loc):
         right =np.array(line_intersection(right_wall, ray))
         
         if (line_intersection(up_wall, ray) != -1 and validate_pos(up) == 1):
-            x2 = up[0] + np.random.normal(loc=0.0, scale=0.1, size=None) #Adding noise two the measures
-            y2 = up[1] + np.random.normal(loc=0.0, scale=0.1, size=None)
-            measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) ) 
+            measures[i] = sqrt( pow(up[0]-x1, 2) + pow( up[1]-y1,2) ) + np.random.normal(loc=0.0, scale=0.1, size=None)
             #plt.scatter(up[0], up[1], c = '#d62728' )
 
 
         if (line_intersection(down_wall, ray) != -1 and validate_pos(down) == 1 ):
-            x2 = down[0] + np.random.normal(loc=0.0, scale=0.1, size=None)
-            y2 = down[1] + np.random.normal(loc=0.0, scale=0.1, size=None)
-            measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) ) 
+            measures[i] = sqrt( pow( down[0]-x1, 2) + pow( down[1] -y1,2) ) +  np.random.normal(loc=0.0, scale=0.1, size=None)
             #plt.scatter(down[0], down[1], c = '#d62728' )
 
 
         if (line_intersection(left_wall, ray) != -1 and validate_pos(left) == 1 ):
-            x2 = left[0] + np.random.normal(loc=0.0, scale=0.1, size=None)
-            y2 = left[1] + np.random.normal(loc=0.0, scale=0.1, size=None)
-            measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) ) 
+            measures[i] = sqrt( pow( left[0]-x1, 2) + pow( left[1]-y1,2) ) + np.random.normal(loc=0.0, scale=0.1, size=None)
             #plt.scatter(left[0], left[1], c = '#d62728' )
  
         if ( line_intersection(right_wall, ray) != -1 and validate_pos(right) == 1):
-            x2 = right[0] + np.random.normal(loc=0.0, scale=0.1, size=None)
-            y2 = right[1] + np.random.normal(loc=0.0, scale=0.1, size=None)
-            measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) ) 
+            measures[i] = sqrt( pow( right[0]-x1, 2) + pow( right[1]-y1,2) ) + np.random.normal(loc=0.0, scale=0.1, size=None)
             #plt.scatter(right[0], right[1], c = '#d62728' )
 
         radius += 2
@@ -234,7 +226,7 @@ def update(measurments, particles):
     distances = np.empty([N_measures,M])
     distances.fill(0.)
     weights = np.empty([M,1])
-    weights.fill(1.)
+    weights.fill(1./M)
 
     for i in range (M):
         distances[:,i] = laser_model(particles[i].reshape((3,1))).reshape((N_measures,)) 
@@ -364,7 +356,6 @@ while(1):
     #Output
     print("Iteration nº:",k+1)
     print('Real Localization:', robot_loc[0][0],robot_loc[1][0],robot_loc[2][0]*(180/pi))
-    # Centroid of the cluster of particles
     print("Predicted Localization:", np.average(particles[:,0]), np.average(particles[:,1]), np.average(particles[:,2])*(180/pi))
     errors[k][0] = abs(np.average(particles[:,0])-robot_loc[0][0])
     errors[k][1] = abs(np.average(particles[:,1])-robot_loc[1][0])
@@ -391,5 +382,3 @@ plt.ylabel("errors")
 plt.legend(loc='upper left')
 plt.show()
 plt.close()
-
-    
