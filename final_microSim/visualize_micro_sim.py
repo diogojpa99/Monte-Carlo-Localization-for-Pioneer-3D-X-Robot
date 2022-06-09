@@ -19,7 +19,7 @@ import cv2
 
 #Rectangle:
 lower = 0
-upper = 20
+upper = 10
 
 #Number of particles
 M = 400
@@ -28,9 +28,10 @@ M = 400
 N_measures = 60
 
 #Actions
-# action[0] : cmd_vel1
-# action[1] : twist
-actions = np.empty([2,1])
+actions = np.array([(1,90),(1,90),(1,45),(1,45),(1,45), (1,45), (1,0),(1,0),(1,285), (1,285), (1,285),
+                    (1,235),(1,235), (1,180), (1,180), (1,135), (1,90), (1,90), (1,45)])
+
+last_iteration = actions.shape[0]
 
 #Errors
 errors = np.empty([upper + 15,3])
@@ -77,7 +78,7 @@ def line_intersection(line1, line2):
 def init_robot_pos():
     loc = np.empty([3,1])
     loc[0] = 2
-    loc[1] = 2
+    loc[1] = 3
     loc[2] = 0
 
     return loc
@@ -98,9 +99,9 @@ def odometry_model(prev_loc, vel, angle):
     loc = np.empty([3,1])
 
     # Target distribution
-    loc[0] = prev_loc[0] + vel*cos(angle) + np.random.normal(loc=0.0, scale=0.3, size=None)
-    loc[1] = prev_loc[1] + vel*sin(angle) + np.random.normal(loc=0.0, scale=0.3, size=None)
-    loc[2] = prev_loc[2] + angle + np.random.normal(loc=0.0, scale=0.1, size=None)
+    loc[0] = prev_loc[0] + vel*cos(angle) + np.random.normal(loc=0.0, scale=0.2, size=None)
+    loc[1] = prev_loc[1] + vel*sin(angle) + np.random.normal(loc=0.0, scale=0.2, size=None)
+    loc[2] = prev_loc[2] + angle + np.random.normal(loc=0.0, scale=0.05, size=None)
 
 
     if loc[2] >= (2*pi):
@@ -177,7 +178,7 @@ def laser_model(loc):
     measures = np.empty([N_measures,1])
     measures.fill(0.)
     radius = 0 #Variação de ângulo do laser
-    reach = 100 #Reach do laser
+    reach = 100
     x1 = loc[0][0]
     y1 = loc[1][0]
     teta = loc[2][0]
@@ -218,7 +219,7 @@ def laser_model(loc):
             measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) ) 
             #plt.scatter(right[0], right[1], c = '#d62728' )
 
-        radius += 4
+        radius += 2
         
     #measures = measures[measures != 0]
     #measures = measures.reshape((measures.shape[0],1))
@@ -249,14 +250,6 @@ def update(measurments, particles):
     
     
     #print(weights)
-    plt.close()
-    plt.title('Weights')
-    plt.plot(weights, c = '#d62728' )
-    plt.xlabel("Number of particles")
-    plt.ylabel("weights")
-    plt.legend(loc='upper left')
-    plt.show()
-    plt.close()
     
 
     return weights
@@ -277,6 +270,8 @@ def systematic_resample(weights):
             j += 1
     return indexes
 
+
+# Plot the map
 def plot(label):
 
     # Calculate the point density of the particles
@@ -299,8 +294,9 @@ def plot(label):
     plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 1, robot_loc[2]*(180/pi)), c = '#d62728' , s=70, label = "Real position")
     plt.xlabel("x")
     plt.ylabel("y")
-    plt.legend(loc='upper left')
     plt.show()
+
+    return
 
 
 
@@ -321,12 +317,8 @@ robot_loc = init_robot_pos()
 #Create particles
 particles = create_particles(M)
 
-
-#Getting info from the terminal
-print('Please input the robot traveled distance:')
-actions[0] = float(input())
-print('Please input the robot rotation')
-actions[1] = float(input())
+#Activationg interactive mode
+#plt.ion()
 
 #Start simulation
 print("Simulation has started!")
@@ -337,16 +329,21 @@ while(1):
     #plotting
     plot('Map after Resampling')
 
+    # Erase previous robot position
+    #plt.clf()
+
+
     # Update localization of the robot
-    robot_loc = odometry_model(robot_loc, actions[0], actions[1]*(pi/180))
+    robot_loc = odometry_model(robot_loc, actions[k][0], actions[k][1]*(pi/180))
     if validate_pos(robot_loc) == 0:
         break #simulation terminates
     
     # PREDICT
-    particles = predict(particles, actions)
+    particles = predict(particles, actions[k])
     for i in range (M):
         particles[i] = validate_particle(particles[i])
-    plot('Map after Predict')
+
+    #plot('Map after Predict')
     
     # Retrieving data from the laser
     robot_measures = laser_model(robot_loc)
@@ -373,6 +370,10 @@ while(1):
 
     k +=1
 
+    if ( k == last_iteration):
+        break
+
+#Plot errors
 x_error =  errors[:,0]
 x_error = x_error[ x_error !=0]
 y_error =  errors[:,1]
@@ -380,7 +381,7 @@ y_error = y_error[ y_error !=0]
 theta_error =  errors[:,2]
 theta_error = theta_error[ theta_error !=0]
 
-
+plt.ioff()
 plt.close()
 plt.title('errors')
 plt.plot(x_error, c = '#bcbd22', label = "x" )
@@ -391,5 +392,3 @@ plt.ylabel("errors")
 plt.legend(loc='upper left')
 plt.show()
 plt.close()
-
-    
