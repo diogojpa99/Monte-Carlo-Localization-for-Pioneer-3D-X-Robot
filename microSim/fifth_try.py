@@ -10,12 +10,36 @@ from math import cos, sin, sqrt, exp, pi
 from scipy import stats
 from scipy.stats import gaussian_kde
 import cv2 
-#import shapely as shapely 
-#from shapely.geometry import LineString, Point
+
+
+
+
+
+""" Global Variables """
+
+#Rectangle:
+lower = 0
+upper = 20
+
+#Number of particles
+M = 400
+
+# Number of measures of the laser model
+N_measures = 270
+
+#Actions
+# action[0] : cmd_vel
+# action[1] : twist
+actions = np.empty([2,1])
+
+#Errors
+errors = np.empty([20,3])
+
 
 
 
 """ Functions """
+
 
 # intersection between two lines 
 def line_intersection(line1, line2):
@@ -33,7 +57,6 @@ def line_intersection(line1, line2):
     x = det(d, xdiff) / div
     y = det(d, ydiff) / div
 
-    point = (x,y)
 
     # intersection is out of bound
     if ( max(line1[0][0],line1[1][0]) < min(line2[0][0],line2[1][0]) or 
@@ -43,6 +66,8 @@ def line_intersection(line1, line2):
 
         return -1
 
+    #Adicionar ruído
+    point = (x + np.random.normal(loc=0.0, scale=0.05, size=None) ,y + np.random.normal(loc=0.0, scale=0.05, size=None))
 
     return point
 
@@ -74,9 +99,9 @@ def odometry_model(prev_loc, vel, angle):
     loc = np.empty([3,1])
 
     # Target distribution
-    loc[0] = prev_loc[0] + vel*cos(angle) + np.random.normal(loc=0.0, scale=0.2, size=None)
-    loc[1] = prev_loc[1] + vel*sin(angle) + np.random.normal(loc=0.0, scale=0.2, size=None)
-    loc[2] = prev_loc[2] + angle + np.random.normal(loc=0.0, scale=0.2, size=None)
+    loc[0] = prev_loc[0] + vel*cos(angle) + np.random.normal(loc=0.0, scale=0.25, size=None)
+    loc[1] = prev_loc[1] + vel*sin(angle) + np.random.normal(loc=0.0, scale=0.25, size=None)
+    loc[2] = prev_loc[2] + angle + np.random.normal(loc=0.0, scale=0.02, size=None)
 
 
     if loc[2] >= (2*pi):
@@ -88,20 +113,21 @@ def odometry_model(prev_loc, vel, angle):
 # validate_pos():
 def validate_pos(loc):
 
-    if loc[0] < 0 or loc[0] > 10 or loc[1] < 0 or loc[1] > 10:
+    if loc[0] < lower or loc[0] > upper or loc[1] < lower or loc[1] > upper:
         return 0
     else:
         return 1
+
 
 # validate_particle():
 # If particle leaves the map they are spread
 def validate_particle(loc):
 
 
-    if loc[0] < 0: loc[0] = 0
-    elif loc[0] > 10: loc[0] = 10
-    if loc[1] < 0: loc[1] = 0
-    elif loc[1] > 10: loc[1] = 10
+    if loc[0] < lower: loc[0] = 0
+    elif loc[0] > upper: loc[0] = 10
+    if loc[1] < lower: loc[1] = 0
+    elif loc[1] > upper: loc[1] = 10
 
 
     return loc
@@ -118,8 +144,8 @@ def validate_particle(loc):
 def create_particles(M):
     
     particles = np.empty([M, 3])
-    particles[:, 0] = uniform(0, 10, size = M)
-    particles[:, 1] = uniform(0, 10, size = M)
+    particles[:, 0] = uniform(lower, upper, size = M)
+    particles[:, 1] = uniform(lower, upper, size = M)
     particles[:, 2] = uniform(0, 2*pi, size = M)
     
     return particles
@@ -141,6 +167,7 @@ def predict(particles, actions):
         particles[i]  = odometry_model(particles[i], actions[0], actions[1]*(pi/180)).reshape((3,))     
         
     return particles 
+
 
 #Modelo do laser
 def laser_model(loc):
@@ -164,24 +191,24 @@ def laser_model(loc):
         right =np.array(line_intersection(right_wall, ray))
         
         if (line_intersection(up_wall, ray) != -1 and validate_pos(up) == 1):
-            measures[i] = sqrt( pow(up[0]-x, 2) + pow(up[1]-y,2) ) + np.random.normal(loc=0.0, scale=0.1, size=None)
+            measures[i] = sqrt( pow(up[0]-x, 2) + pow(up[1]-y,2) ) 
             #plt.scatter(up[0], up[1], c = '#d62728' )
 
 
         if (line_intersection(down_wall, ray) != -1 and validate_pos(down) == 1 ):
-            measures[i] = sqrt( pow(down[0]-x, 2) + pow(down[1]-y,2) ) + np.random.normal(loc=0.0, scale=0.1, size=None)
+            measures[i] = sqrt( pow(down[0]-x, 2) + pow(down[1]-y,2) ) 
             #plt.scatter(down[0], down[1], c = '#d62728' )
 
 
         if (line_intersection(left_wall, ray) != -1 and validate_pos(left) == 1 ):
-            measures[i] = sqrt( pow( left[0]-x , 2) + pow( left[1]-y ,2) ) + np.random.normal(loc=0.0, scale=0.1, size=None)
+            measures[i] = sqrt( pow( left[0]-x , 2) + pow( left[1]-y ,2) ) 
             #plt.scatter(left[0], left[1], c = '#d62728' )
  
         if ( line_intersection(right_wall, ray) != -1 and validate_pos(right) == 1):
-            measures[i] = sqrt( pow(right[0]-x, 2) + pow(right[1]-y,2) ) + np.random.normal(loc=0.0, scale=0.1, size=None)
+            measures[i] = sqrt( pow(right[0]-x, 2) + pow(right[1]-y,2) ) 
             #plt.scatter(right[0], right[1], c = '#d62728' )
 
-        radius += 3
+        radius += 2
         
     #measures = measures[measures != 0]
     #measures = measures.reshape((measures.shape[0],1))
@@ -213,7 +240,11 @@ def update(measurments, particles):
     
     #print(weights)
     plt.close()
+    plt.title('Weights')
     plt.plot(weights, c = '#d62728' )
+    plt.xlabel("Number of particles")
+    plt.ylabel("weights")
+    plt.legend(loc='upper left')
     plt.show()
     plt.close()
     
@@ -236,7 +267,7 @@ def systematic_resample(weights):
             j += 1
     return indexes
 
-def plot():
+def plot(label):
 
     # Calculate the point density of the particles
     x = particles[:,0]
@@ -247,33 +278,20 @@ def plot():
     # Sort the points by density, so that the densest points are plotted last
     idx = z.argsort()
     x, y, z = x[idx], y[idx], z[idx]
-
-    plt.scatter(x, y, c=z, s=5)
+    plt.title(label)
+    plt.scatter(x, y, c=z, s=5, label = "particles")
     plt.plot(down_wall[0],down_wall[1], c = 'black')
     plt.plot(up_wall[0],up_wall[1], c = 'black')
     plt.plot(left_wall[0],left_wall[1], c = 'black')
     plt.plot(right_wall[0],right_wall[1], c = 'black')
     #for i in range(M):
        #plt.scatter(particles[i,0], particles[i,1], marker = (3, 2, particles[i,2]*(180/pi)), c =  z, s = 5)
-    plt.scatter(robot_loc[0], robot_loc[1], marker = (3, 0, robot_loc[2]*(180/pi)), c = '#d62728' , s=70)
+    plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 1, robot_loc[2]*(180/pi)), c = '#d62728' , s=70, label = "Real position")
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.legend(loc='upper left')
     plt.show()
 
-
-
-
-
-""" Global Variables """
-
-#Number of particles
-M = 400
-
-#Actions
-# action[0] : cmd_vel
-# action[1] : twist
-actions = np.empty([2,1])
-
-# Numver of measures of the laser model
-N_measures = 270
 
 
 
@@ -282,10 +300,10 @@ N_measures = 270
 """ main() """
 
 # Create rectangle
-down_wall = np.array([ (10,0), (0,0)]) # y = 0
-up_wall = np.array([(0,10), (10,10)]) # y = 10
-left_wall = np.array([(0,0), (0,10)]) # x = 0
-right_wall = np.array([(10,10),(10,0)]) # x = 10
+down_wall = np.array([ (upper,lower), (lower,lower)]) # y = 0
+up_wall = np.array([(lower,upper), (upper,upper)]) # y = 10
+left_wall = np.array([(lower,lower), (lower,upper)]) # x = 0
+right_wall = np.array([(upper,upper),(upper,lower)]) # x = 10
 
 # loc: Localization of the robot
 robot_loc = init_robot_pos()
@@ -300,23 +318,25 @@ actions[0] = float(input())
 print('Please input the robot rotation')
 actions[1] = float(input())
 
-
+#Start simulation
+print("Simulation has started!")
+k = 0
+errors.fill(0.)
 while(1):
 
     #plotting
-    plot()
+    plot('Map after Resampling')
 
     # Update localization of the robot
     robot_loc = odometry_model(robot_loc, actions[0], actions[1]*(pi/180))
     if validate_pos(robot_loc) == 0:
-        exit(0) #simulation terminates
-
+        break #simulation terminates
+    
     # PREDICT
     particles = predict(particles, actions)
     for i in range (M):
         particles[i] = validate_particle(particles[i])
-    
-    plot()
+    plot('Map after Predict')
     
     # Retrieving data from the laser
     robot_measures = laser_model(robot_loc)
@@ -330,4 +350,35 @@ while(1):
     particles[:] = particles[indexes]
     weights[:] = weights[indexes]
     weights /= np.sum(weights)
+
+    #Output
+    print("Iteration nº:",k+1)
+    print('Real Localization:', robot_loc[0][0],robot_loc[1][0],robot_loc[2][0]*(180/pi))
+    print("Predicted Localization:", np.average(particles[:,0]), np.average(particles[:,1]), np.average(particles[:,2])*(180/pi))
+    errors[k][0] = abs(np.average(particles[:,0])-robot_loc[0][0])
+    errors[k][1] = abs(np.average(particles[:,1])-robot_loc[1][0])
+    errors[k][2] = abs(np.average(particles[:,2])-robot_loc[2][0])
+    print("Error:",errors[k][0], errors[k][1], errors[k][2]*(180/pi))
+
+    k +=1
+
+x_error =  errors[:,0]
+x_error = x_error[ x_error !=0]
+y_error =  errors[:,1]
+y_error = y_error[ y_error !=0]
+theta_error =  errors[:,2]
+theta_error = theta_error[ theta_error !=0]
+
+
+plt.close()
+plt.title('errors')
+plt.plot(x_error, c = '#bcbd22', label = "x" )
+plt.plot(y_error, c = '#9467bd', label = "y" )
+plt.plot(theta_error, c = '#e377c2', label = "theta" )
+plt.xlabel("Number of iterations")
+plt.ylabel("errors")
+plt.legend(loc='upper left')
+plt.show()
+plt.close()
+
     

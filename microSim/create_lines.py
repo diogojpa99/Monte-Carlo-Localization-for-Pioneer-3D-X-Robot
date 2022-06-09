@@ -15,7 +15,9 @@ import cv2
 """ Functions """
 
 # intersection between two lines 
+# !Atenção POSSO TER QUE ALTERAR O RETORNO '-1' NO FUTURO
 def line_intersection(line1, line2):
+
     xdiff = (line1[0][0] - line1[1][0], line2[0][0] - line2[1][0])
     ydiff = (line1[0][1] - line1[1][1], line2[0][1] - line2[1][1])
 
@@ -24,19 +26,20 @@ def line_intersection(line1, line2):
 
     div = det(xdiff, ydiff)
     if div == 0: #Ver se são paralelas
-       return -1 # !Atenção PODE TER QUE SER ALTERADO NO FUTURO!
+       return -1 
 
     d = (det(*line1), det(*line2))
     x = det(d, xdiff) / div
     y = det(d, ydiff) / div
 
-    point = (x,y)
-
+    """
     print('inspect:')
     print(min ( min(line1[0][0],line1[1][0]), min(line2[0][0],line2[1][0]) ))
     print(max( max(line1[0][0],line1[1][0]), max(line2[0][0],line2[1][0])))
     print(x)
     print('end')
+    """
+
     """
     if ((x < max( min(line1[0][0],line1[1][0]), min(line2[0][0],line2[1][0]) )) or 
         (x > min( max(line1[0][0],line1[1][0]), max(line2[0][0],line2[1][0]))) or
@@ -54,8 +57,11 @@ def line_intersection(line1, line2):
 
         return -1
 
+    if (validate_pos((x,y)) == 0):
+        return -1
 
-    return point
+    #Adicionar ruído
+    return (x + np.random.normal(loc=0.0, scale=0.1, size=None) ,y + np.random.normal(loc=0.0, scale=0.1, size=None))
 
 
 # init_robot_pos():
@@ -169,19 +175,19 @@ def laser_model(loc):
         left =np.array(line_intersection(left_wall, ray))
         right =np.array(line_intersection(right_wall, ray))
         
-        if (line_intersection(up_wall, ray) != -1 and validate_pos(up) == 1):
+        if (line_intersection(up_wall, ray) != -1):
             plt.scatter(up[0], up[1], c = '#d62728' )
             print(up)
 
-        if (line_intersection(down_wall, ray) != -1 and validate_pos(down) == 1 ):
+        if (line_intersection(down_wall, ray) != -1):
             plt.scatter(down[0], down[1], c = '#d62728' )
             print(down)
 
-        if (line_intersection(left_wall, ray) != -1 and validate_pos(left) == 1 ):
+        if (line_intersection(left_wall, ray) != -1):
             plt.scatter(left[0], left[1], c = '#d62728' )
             print(left)
 
-        if ( line_intersection(right_wall, ray) != -1 and validate_pos(right) == 1):
+        if ( line_intersection(right_wall, ray) != -1):
             plt.scatter(right[0], right[1], c = '#d62728' )
             print(right)
         
