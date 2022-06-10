@@ -177,7 +177,7 @@ def laser_model(loc):
     measures = np.empty([N_measures,1])
     measures.fill(0.)
     radius = 0 #Variação de ângulo do laser
-    reach = 100 #Reach do laser
+    reach = 4 #Reach do laser
     x1 = loc[0][0]
     y1 = loc[1][0]
     teta = loc[2][0]
@@ -199,20 +199,20 @@ def laser_model(loc):
             #plt.scatter(up[0], up[1], c = '#d62728' )
 
 
-        if (line_intersection(down_wall, ray) != -1 and validate_pos(down) == 1 ):
+        elif (line_intersection(down_wall, ray) != -1 and validate_pos(down) == 1 ):
             x2 = down[0] + np.random.normal(loc=0.0, scale=0.1, size=None)
             y2 = down[1] + np.random.normal(loc=0.0, scale=0.1, size=None)
             measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) ) 
             #plt.scatter(down[0], down[1], c = '#d62728' )
 
 
-        if (line_intersection(left_wall, ray) != -1 and validate_pos(left) == 1 ):
+        elif (line_intersection(left_wall, ray) != -1 and validate_pos(left) == 1 ):
             x2 = left[0] + np.random.normal(loc=0.0, scale=0.1, size=None)
             y2 = left[1] + np.random.normal(loc=0.0, scale=0.1, size=None)
             measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) ) 
             #plt.scatter(left[0], left[1], c = '#d62728' )
  
-        if ( line_intersection(right_wall, ray) != -1 and validate_pos(right) == 1):
+        elif ( line_intersection(right_wall, ray) != -1 and validate_pos(right) == 1):
             x2 = right[0] + np.random.normal(loc=0.0, scale=0.1, size=None)
             y2 = right[1] + np.random.normal(loc=0.0, scale=0.1, size=None)
             measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) ) 
@@ -234,7 +234,8 @@ def update(measurments, particles):
     distances = np.empty([N_measures,M])
     distances.fill(0.)
     weights = np.empty([M,1])
-    weights.fill(1.)
+    weights.fill(1./M)
+    sd = 0.5
 
     for i in range (M):
         distances[:,i] = laser_model(particles[i].reshape((3,1))).reshape((N_measures,)) 
@@ -243,7 +244,7 @@ def update(measurments, particles):
     for i in range (M):
         for j in range (len(measurments)):
             #print("error:",abs(measurments[j] - distances[j][i]))
-            weights[i] += exp(-0.5* pow(1/0.5,2) * pow( measurments[j] - distances[j][i], 2)) 
+            weights[i] += exp(-0.5* pow(1/sd,2) * pow( measurments[j] - distances[j][i], 2)) 
 
     weights /= np.sum(weights) #Normalizar
     

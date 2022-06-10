@@ -24,8 +24,12 @@ upper = 10
 #Number of particles
 M = 400
 
+# Angle of the laser variation
+radius_var = 10
+
 # Number of measures of the laser model
-N_measures = 60
+N_measures = int(240/radius_var)
+laser_reach = 4
 
 #Actions
 actions = np.array([(1,90),(1,90),(1,45),(1,45),(1,45), (1,45), (1,0),(1,0),(1,285), (1,285), (1,285),
@@ -177,15 +181,14 @@ def laser_model(loc):
 
     measures = np.empty([N_measures,1])
     measures.fill(0.)
-    radius = 0 #Variação de ângulo do laser
-    reach = 100
+    laser_radius = 0 #Variação de ângulo do laser
     x1 = loc[0][0]
     y1 = loc[1][0]
     teta = loc[2][0]
 
     for i in range(N_measures):
 
-        ray = np.array([(x1,y1), (reach*cos(teta + radius*(pi/180)), reach*sin(teta + radius*(pi/180))) ]) #creating line segment
+        ray = np.array([(x1,y1), (laser_reach*cos(teta + laser_radius*(pi/180)), laser_reach*sin(teta + laser_radius*(pi/180))) ]) #creating line segment
 
         #Intersect
         up = np.array(line_intersection(up_wall, ray))
@@ -194,32 +197,32 @@ def laser_model(loc):
         right =np.array(line_intersection(right_wall, ray))
         
         if (line_intersection(up_wall, ray) != -1 and validate_pos(up) == 1):
-            x2 = up[0] + np.random.normal(loc=0.0, scale=0.1, size=None) #Adding noise two the measures
-            y2 = up[1] + np.random.normal(loc=0.0, scale=0.1, size=None)
+            x2 = up[0] + np.random.normal(loc=0.0, scale=0.05, size=None) #Adding noise two the measures
+            y2 = up[1] + np.random.normal(loc=0.0, scale=0.05, size=None)
             measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) ) 
             #plt.scatter(up[0], up[1], c = '#d62728' )
 
 
-        if (line_intersection(down_wall, ray) != -1 and validate_pos(down) == 1 ):
-            x2 = down[0] + np.random.normal(loc=0.0, scale=0.1, size=None)
-            y2 = down[1] + np.random.normal(loc=0.0, scale=0.1, size=None)
+        elif (line_intersection(down_wall, ray) != -1 and validate_pos(down) == 1 ):
+            x2 = down[0] + np.random.normal(loc=0.0, scale=0.05, size=None)
+            y2 = down[1] + np.random.normal(loc=0.0, scale=0.05, size=None)
             measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) ) 
             #plt.scatter(down[0], down[1], c = '#d62728' )
 
 
-        if (line_intersection(left_wall, ray) != -1 and validate_pos(left) == 1 ):
-            x2 = left[0] + np.random.normal(loc=0.0, scale=0.1, size=None)
-            y2 = left[1] + np.random.normal(loc=0.0, scale=0.1, size=None)
+        elif (line_intersection(left_wall, ray) != -1 and validate_pos(left) == 1 ):
+            x2 = left[0] + np.random.normal(loc=0.0, scale=0.05, size=None)
+            y2 = left[1] + np.random.normal(loc=0.0, scale=0.05, size=None)
             measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) ) 
             #plt.scatter(left[0], left[1], c = '#d62728' )
  
-        if ( line_intersection(right_wall, ray) != -1 and validate_pos(right) == 1):
-            x2 = right[0] + np.random.normal(loc=0.0, scale=0.1, size=None)
-            y2 = right[1] + np.random.normal(loc=0.0, scale=0.1, size=None)
+        elif ( line_intersection(right_wall, ray) != -1 and validate_pos(right) == 1):
+            x2 = right[0] + np.random.normal(loc=0.0, scale=0.05, size=None)
+            y2 = right[1] + np.random.normal(loc=0.0, scale=0.05, size=None)
             measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) ) 
             #plt.scatter(right[0], right[1], c = '#d62728' )
 
-        radius += 2
+        laser_radius += radius_var
         
     #measures = measures[measures != 0]
     #measures = measures.reshape((measures.shape[0],1))
@@ -313,7 +316,7 @@ up_wall = np.array([(lower,upper), (upper,upper)]) # y = 10
 left_wall = np.array([(lower,lower), (lower,upper)]) # x = 0
 right_wall = np.array([(upper,upper),(upper,lower)]) # x = 10
 
-# loc: Localization of the robot
+# robot_loc: Localization of the robot
 robot_loc = init_robot_pos()
 
 #Create particles

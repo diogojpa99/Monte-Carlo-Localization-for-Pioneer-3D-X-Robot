@@ -176,15 +176,15 @@ def laser_model(loc):
             plt.scatter(up[0], up[1], c = '#d62728' )
             print(up)
 
-        if (line_intersection(down_wall, ray) != -1 and validate_pos(down) == 1):
+        elif (line_intersection(down_wall, ray) != -1 and validate_pos(down) == 1):
             plt.scatter(down[0], down[1], c = '#d62728' )
             print(down)
 
-        if (line_intersection(left_wall, ray) != -1 and validate_pos(left) == 1):
+        elif (line_intersection(left_wall, ray) != -1 and validate_pos(left) == 1):
             plt.scatter(left[0], left[1], c = '#d62728' )
             print(left)
 
-        if ( line_intersection(right_wall, ray) != -1 and validate_pos(right) == 1):
+        elif ( line_intersection(right_wall, ray) != -1 and validate_pos(right) == 1):
             plt.scatter(right[0], right[1], c = '#d62728' )
             print(right)
         

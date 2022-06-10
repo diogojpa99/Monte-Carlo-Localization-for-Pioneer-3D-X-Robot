@@ -177,18 +177,18 @@ def laser_model(loc):
             plt.scatter(x2, y2, c = '#d62728' )
 
 
-        if (line_intersection(down_wall, ray) != -1 and validate_pos(down) == 1 ):
+        elif (line_intersection(down_wall, ray) != -1 and validate_pos(down) == 1 ):
             x2 = down[0] + np.random.normal(loc=0.0, scale=0.07, size=None)
             y2 = down[1] + np.random.normal(loc=0.0, scale=0.07, size=None)
             plt.scatter(x2, y2, c = '#d62728' )
 
 
-        if (line_intersection(left_wall, ray) != -1 and validate_pos(left) == 1 ):
+        elif (line_intersection(left_wall, ray) != -1 and validate_pos(left) == 1 ):
             x2 = left[0] + np.random.normal(loc=0.0, scale=0.07, size=None)
             y2 = left[1] + np.random.normal(loc=0.0, scale=0.07, size=None)
             plt.scatter(x2, y2, c = '#d62728' )
  
-        if ( line_intersection(right_wall, ray) != -1 and validate_pos(right) == 1):
+        elif ( line_intersection(right_wall, ray) != -1 and validate_pos(right) == 1):
             x2 = right[0] + np.random.normal(loc=0.0, scale=0.07, size=None)
             y2 = right[1] + np.random.normal(loc=0.0, scale=0.07, size=None)
             plt.scatter(x2, y2, c = '#d62728' )

@@ -1,4 +1,5 @@
-""" Libraries """
+""" ******************************* Libraries ************************************* """
+
 
 from turtle import clear
 import numpy as np
@@ -10,121 +11,141 @@ from math import cos, sin, sqrt, exp, pi
 from scipy import stats
 import cv2 as cv2
 
-""" Functions """
+
+""" ******************************* Global Variables********************************** """
+
+
+# Map:
+# For 'map14.pgm'
+# 255 -> Free space
+# 0 -> Wal
+free_space = 255
+wall = 0
+
+
+""" ******************************* Functions() ************************************* """
+
 
 # import_image():
 def import_map(file_name):
 
     img = cv2.imread(file_name)
-    print('img:',img.shape)
+    #print('img:',img.shape)
+
 
     grayscale = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    print('grayscale:', grayscale.shape)
-
-    map = np.array(grayscale)
-    print('map:',map.shape)
-
-    # For 'map.pgm'
-    # 250 -> Outside
-    # 254 -> Free space
-    # 0 -> Wall
+    #print('grayscale:', grayscale.shape)
     
-    return map
+    return img, grayscale
+
+# Plot:
+def plot():
+
+    plt.imshow(img)
+    plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 1, robot_loc[2]*(180/pi)), c = '#d62728' , s=70, label = "Real position")
+    plt.show()
+
+    return
 
 # init_robot_pos():
 # initialize the robot position
-# loc[0] : x variable
-# loc[1] : y variable
-# loc[2] : angle
 def init_robot_pos():
+
     loc = np.empty([3,1])
-    loc[0] = int(250)
-    loc[1] = int(250)
-    loc[2] = int(0)
+    loc[0] = 120
+    loc[1] = 255
+    loc[2] = 0
 
     return loc
 
-# odometry_model():
-# Basically this function describes the movement model of the robot
-# The odometry model of the robot is the sum between the target distribution
-# And some gaussian noise (See slides)
-# Input:
-# prev_loc: Localization of the robot at time t
-# vel : Velocity read from the the /pose topic
-# angle : Angle read from the /twits topic
-# In the simulation we obtain vel & angle from the terminal
-# Returns: The localization of the robot at time t+1
-def odometry_model(prev_loc, vel, angle):
-    loc = np.empty([3,1])
+# validate_pos():
+# x and y must be integers
+# If position is ivalid
+# Then the position must be equal to the nearest wall
+def validate_position(loc, x, y):
 
-    # Target distribution
-    loc[0] = prev_loc[0] + vel*cos(angle) 
-    loc[1] = prev_loc[1] + vel*sin(angle)
-    loc[2] = prev_loc[2] + angle 
+    if map[x][y] < 255: #Invalid position
 
+        print(map[x][y])
 
-    return loc 
+        if map[x][y] == 0:
+            loc[0] = x
+            loc[1] = y
 
-def draw_robot(map, robot_loc, color):
-    map[int(robot_loc[0]),int(robot_loc[1])] = color
-    map[int(robot_loc[0])+1,int(robot_loc[1])+1] = color
-    map[int(robot_loc[0])-1,int(robot_loc[1])-1] = color
-    map[int(robot_loc[0])+1,int(robot_loc[1])-1] = color
-    map[int(robot_loc[0])-1,int(robot_loc[1])+1] = color
+        elif map[x][y] > 150: # Mas se não for igual a zero temos que encontrar a parede mais próxima
 
-    return map
+            # VER MELHOR ESTA PARTE
+            return -1
+    
+    return loc
 
 
+""" ******************************* main() ************************************* """
+
+# Import Map
+img, map = import_map('map1.png')
+
+plt.imshow(map)
+plt.show()
+
+src = cv2.imread('map1.png', cv2.IMREAD_GRAYSCALE)
+plt.imshow(src)
+plt.show()
+
+dst = cv2.Canny(src, 50, 200, None, 3)
+
+# Copy edges to the images that will display the results in BGR
+cdst = cv2.cvtColor(dst, cv2.COLOR_GRAY2BGR)
+cdstP = np.copy(cdst)
+
+#  Standard Hough Line Transform
+lines = cv2.HoughLines(dst, 1, np.pi / 180, 150, None, 0, 0)
+
+# Draw the lines
+if lines is not None:
+    for i in range(0, len(lines)):
+        rho = lines[i][0][0]
+        theta = lines[i][0][1]
+        a = cos(theta)
+        b = sin(theta)
+        x0 = a * rho
+        y0 = b * rho
+        pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
+        pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
+        cv2.line(cdst, pt1, pt2, (0,0,255), 3, cv2.LINE_AA)
 
 
-""" Global Variables """
+linesP = cv2.HoughLinesP(dst, 1, np.pi / 180, 50, None, 50, 10)
 
-#Number of particles
-M = 300
+if linesP is not None:
+    for i in range(0, len(linesP)):
+        l = linesP[i][0]
+        cv2.line(cdstP, (l[0], l[1]), (l[2], l[3]), (0,0,255), 3, cv2.LINE_AA)
 
-#Actions
-# action[0] : cmd_vel
-# action[1] : twist
-actions = np.empty([2,1])
+cv2.imshow("Source", src)
+cv2.imshow("Detected Lines (in red) - Standard Hough Line Transform", cdst)
+cv2.imshow("Detected Lines (in red) - Probabilistic Line Transform", cdstP)
+cv2.waitKey()
 
 
+print(cdstP.shape)
+print(lines.shape)
+print(np.array(linesP).shape)
+print(np.array(linesP))
 
+print(linesP[0][0][0])
+print(linesP[0][0])
 
-""" main() """
+plt.imshow(cdstP)
+#plt.scatter(0,0)
+plt.show()
 
-# import the map
-map = import_map('map.pgm')
-
-# loc: Localization of the robot
+"""
+# robot_loc: Localization of the robot
 robot_loc = init_robot_pos()
-
-#Activationg interactive mode
-plt.ion()
-
-
-
-
-
-while(1):
-
-    #plotting
-    #plt.scatter(robot_loc[0], robot_loc[1], marker = (3, 0, robot_loc[0]), c = 'red' )
-    if map[int(robot_loc[0]),int(robot_loc[1])] == 254:
-        map = draw_robot(map, robot_loc, 0)
-    plt.imshow(map)
-    plt.show() 
-
-    #Getting info from the terminal
-    print('Please input the robot velocity:')
-    actions[0] = float(input())
-    print('Please input the robot rotation')
-    actions[1] = float(input())
-
-    #Clean the map
-    if map[int(robot_loc[0]),int(robot_loc[1])] == 0:
-        map = draw_robot(map, robot_loc, 254)
-    # Update localization of the robot
-    robot_loc = odometry_model(robot_loc, actions[0], actions[1])
-    print("Robot_Loc:",robot_loc)
-
-   
+print(map[120][250])
+print(int(robot_loc[0]), int(robot_loc[1]))
+print(robot_loc[0], robot_loc[1])
+#robot_loc = validate_position(robot_loc, int(robot_loc[0]), int(robot_loc[1]))
+"""
+#plot()

@@ -25,7 +25,10 @@ upper = 10
 M = 250
 
 # Number of measures of the laser model
-N_measures = 60
+N_measures = 20
+
+# Angle of the laser variation
+radius_var = 12
 
 #Actions
 # action[0] : cmd_vel1
@@ -98,8 +101,8 @@ def odometry_model(prev_loc, vel, angle):
     loc = np.empty([3,1])
 
     # Target distribution
-    loc[0] = prev_loc[0] + vel*cos(angle) + np.random.normal(loc=0.0, scale=0.1, size=None)
-    loc[1] = prev_loc[1] + vel*sin(angle) + np.random.normal(loc=0.0, scale=0.1, size=None)
+    loc[0] = prev_loc[0] + vel*cos(angle) + np.random.normal(loc=0.0, scale=0.2, size=None)
+    loc[1] = prev_loc[1] + vel*sin(angle) + np.random.normal(loc=0.0, scale=0.2, size=None)
     loc[2] = prev_loc[2] + angle + np.random.normal(loc=0.0, scale=0.1, size=None)
 
 
@@ -177,7 +180,7 @@ def laser_model(loc):
     measures = np.empty([N_measures,1])
     measures.fill(0.)
     radius = 0 #Variação de ângulo do laser
-    reach = 100
+    reach = 4
     x1 = loc[0][0]
     y1 = loc[1][0]
     teta = loc[2][0]
@@ -193,32 +196,32 @@ def laser_model(loc):
         right =np.array(line_intersection(right_wall, ray))
         
         if (line_intersection(up_wall, ray) != -1 and validate_pos(up) == 1):
-            x2 = up[0] + np.random.normal(loc=0.0, scale=0.1, size=None) #Adding noise two the measures
-            y2 = up[1] + np.random.normal(loc=0.0, scale=0.1, size=None)
+            x2 = up[0] + np.random.normal(loc=0.0, scale=0.07, size=None) #Adding noise two the measures
+            y2 = up[1] + np.random.normal(loc=0.0, scale=0.07, size=None)
             measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) ) 
             #plt.scatter(up[0], up[1], c = '#d62728' )
 
 
-        if (line_intersection(down_wall, ray) != -1 and validate_pos(down) == 1 ):
-            x2 = down[0] + np.random.normal(loc=0.0, scale=0.1, size=None)
-            y2 = down[1] + np.random.normal(loc=0.0, scale=0.1, size=None)
+        elif (line_intersection(down_wall, ray) != -1 and validate_pos(down) == 1 ):
+            x2 = down[0] + np.random.normal(loc=0.0, scale=0.07, size=None)
+            y2 = down[1] + np.random.normal(loc=0.0, scale=0.07, size=None)
             measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) ) 
             #plt.scatter(down[0], down[1], c = '#d62728' )
 
 
-        if (line_intersection(left_wall, ray) != -1 and validate_pos(left) == 1 ):
-            x2 = left[0] + np.random.normal(loc=0.0, scale=0.1, size=None)
-            y2 = left[1] + np.random.normal(loc=0.0, scale=0.1, size=None)
+        elif (line_intersection(left_wall, ray) != -1 and validate_pos(left) == 1 ):
+            x2 = left[0] + np.random.normal(loc=0.0, scale=0.07, size=None)
+            y2 = left[1] + np.random.normal(loc=0.0, scale=0.07, size=None)
             measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) ) 
             #plt.scatter(left[0], left[1], c = '#d62728' )
  
-        if ( line_intersection(right_wall, ray) != -1 and validate_pos(right) == 1):
-            x2 = right[0] + np.random.normal(loc=0.0, scale=0.1, size=None)
-            y2 = right[1] + np.random.normal(loc=0.0, scale=0.1, size=None)
+        elif ( line_intersection(right_wall, ray) != -1 and validate_pos(right) == 1):
+            x2 = right[0] + np.random.normal(loc=0.0, scale=0.07, size=None)
+            y2 = right[1] + np.random.normal(loc=0.0, scale=0.07, size=None)
             measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) ) 
             #plt.scatter(right[0], right[1], c = '#d62728' )
 
-        radius += 2
+        radius += radius_var
         
     #measures = measures[measures != 0]
     #measures = measures.reshape((measures.shape[0],1))
@@ -234,7 +237,8 @@ def update(measurments, particles):
     distances = np.empty([N_measures,M])
     distances.fill(0.)
     weights = np.empty([M,1])
-    weights.fill(1.)
+    weights.fill(1./M)
+    sd = 0.5
 
     for i in range (M):
         distances[:,i] = laser_model(particles[i].reshape((3,1))).reshape((N_measures,)) 
@@ -243,7 +247,7 @@ def update(measurments, particles):
     for i in range (M):
         for j in range (len(measurments)):
             #print("error:",abs(measurments[j] - distances[j][i]))
-            weights[i] += exp(-0.5* pow(1/0.5,2) * pow( measurments[j] - distances[j][i], 2)) 
+            weights[i] += exp(-0.5* pow(1/sd,2) * pow( measurments[j] - distances[j][i], 2)) 
 
     weights /= np.sum(weights) #Normalizar
     
