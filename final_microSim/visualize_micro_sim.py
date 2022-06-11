@@ -2,11 +2,12 @@
 
 from turtle import clear, down
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import scipy
 from numpy.random import uniform
 from numpy.random import normal
-from math import cos, sin, sqrt, exp, pi
+from math import cos, sin, sqrt, exp, pi, radians, degrees
 from scipy import stats
 from scipy.stats import gaussian_kde
 import cv2 
@@ -25,20 +26,27 @@ upper = 10
 M = 400
 
 # Angle of the laser variation
-radius_var = 10
+radius_var = 8
 
 # Number of measures of the laser model
 N_measures = int(240/radius_var)
 laser_reach = 4
 
+""" 
 #Actions
 actions = np.array([(1,90),(1,90),(1,45),(1,45),(1,45), (1,45), (1,0),(1,0),(1,285), (1,285), (1,285),
                     (1,235),(1,235), (1,180), (1,180), (1,135), (1,90), (1,90), (1,45)])
 
 last_iteration = actions.shape[0]
+"""
+actions = np.empty([2,1])
+actions[0] = 1
+actions[1] = 15
+
+last_iteration = 100
 
 #Errors
-errors = np.empty([upper + 15,3])
+errors = np.empty([last_iteration + 15,3])
 
 
 
@@ -49,29 +57,45 @@ errors = np.empty([upper + 15,3])
 # intersection between two lines 
 def line_intersection(line1, line2):
 
-    xdiff = (line1[0][0] - line1[1][0], line2[0][0] - line2[1][0])
-    ydiff = (line1[0][1] - line1[1][1], line2[0][1] - line2[1][1])
+    m1 = (line1[1][1] - line1[0][1]) / (line1[1][0] - line1[0][0])
+    m2 = (line2[1][1] - line2[0][1]) / (line2[1][0] - line2[0][0])
+    b1 = line1[0][1] - m1*line1[0][0]
+    b2 = line2[0][1] - m2*line2[0][0]
 
-    def det(a, b):
-        return a[0] * b[1] - a[1] * b[0]
 
-    div = det(xdiff, ydiff)
-    if div == 0: #Ver se são paralelas
-       return -1 # !Atenção PODE TER QUE SER ALTERADO NO FUTURO!
+    #ver se são paralelas
+    if (m2-m1) == 0:
+         return -1 # !Atenção PODE TER QUE SER ALTERADO NO FUTURO!
 
-    d = (det(*line1), det(*line2))
-    x = det(d, xdiff) / div
-    y = det(d, ydiff) / div
+    if (line1[1][0] - line1[0][0]) == 0: # Recta: x = a
 
-    # intersection is out of bound
-    if ( max(line1[0][0],line1[1][0]) < min(line2[0][0],line2[1][0]) or 
-        max(line2[0][0],line2[1][0]) < min(line1[0][0],line1[1][0]) or
-        max(line1[0][1],line1[1][1]) < min(line2[0][1],line2[1][1]) or 
-        max(line2[0][1],line2[1][1]) < min(line1[0][1],line1[1][1])):
+        x = line1[0][0]
+        y = m2*x + b2
 
-        return -1
+    elif (line2[1][0] - line2[0][0]) == 0:
 
-    return (x,y)
+        x = line2[0][0]
+        y = m1*x + b1
+    
+    else:
+    
+        #y1 = y2
+        x = (b1-b2)/(m2-m1)
+        y = m1*x + b1
+        #if y != (m2*x + b2): print('ERROR:', m2*x + b2)
+
+    # intersection is in bound    
+    if (((x >= max( min(line1[0][0],line1[1][0]), min(line2[0][0],line2[1][0]) )) and
+        (x <= min( max(line1[0][0],line1[1][0]), max(line2[0][0],line2[1][0])))) 
+        and
+        ((y >= max ( min(line1[0][1],line1[1][1]), min(line2[0][1],line2[1][1]))) and
+        (y <= min( max(line1[0][1],line1[1][1]), max(line2[0][1],line2[1][1])))) ):
+
+        return (x,y)  
+
+
+    return -1
+
 
 
 # init_robot_pos():
@@ -99,14 +123,14 @@ def init_robot_pos():
 # angle : Angle read from the /twits topic
 # In the simulation we obtain vel & angle from the terminal
 # Returns: The localization of the robot at time t+1
+# odometry model with noise
 def odometry_model(prev_loc, vel, angle):
     loc = np.empty([3,1])
 
     # Target distribution
-    loc[0] = prev_loc[0] + vel*cos(angle) + np.random.normal(loc=0.0, scale=0.2, size=None)
-    loc[1] = prev_loc[1] + vel*sin(angle) + np.random.normal(loc=0.0, scale=0.2, size=None)
-    loc[2] = prev_loc[2] + angle + np.random.normal(loc=0.0, scale=0.15, size=None)
-
+    loc[2] = prev_loc[2] + angle + np.random.normal(loc=0.0, scale=0.02, size=None)
+    loc[0] = prev_loc[0] + vel*cos(prev_loc[2]) + np.random.normal(loc=0.0, scale=0.02, size=None)
+    loc[1] = prev_loc[1] + vel*sin(prev_loc[2]) + np.random.normal(loc=0.0, scale=0.02, size=None)
 
     if loc[2] >= (2*pi):
         loc[2] = 0 + 2*pi - loc[2]
@@ -114,11 +138,10 @@ def odometry_model(prev_loc, vel, angle):
 
     return loc 
 
-
 # validate_pos():
 def validate_pos(loc):
 
-    if loc[0] < lower or loc[0] > upper or loc[1] < lower or loc[1] > upper:
+    if loc[0] < lower-0.1 or loc[0] > upper + 0.1 or loc[1] < lower-0.1 or loc[1] > upper + 0.1:
         return 0
     else:
         return 1
@@ -181,14 +204,14 @@ def laser_model(loc):
 
     measures = np.empty([N_measures,1])
     measures.fill(0.)
-    laser_radius = 0 #Variação de ângulo do laser
+    laser_radius = -120 #Variação de ângulo do laser
     x1 = loc[0][0]
     y1 = loc[1][0]
     teta = loc[2][0]
 
     for i in range(N_measures):
 
-        ray = np.array([(x1,y1), (laser_reach*cos(teta + laser_radius*(pi/180)), laser_reach*sin(teta + laser_radius*(pi/180))) ]) #creating line segment
+        ray = np.array([(x1,y1), (x1+laser_reach*cos(teta + laser_radius*(pi/180)), y1+laser_reach*sin(teta + laser_radius*(pi/180))) ]) #creating line segment
 
         #Intersect
         up = np.array(line_intersection(up_wall, ray))
@@ -239,7 +262,7 @@ def update(measurments, particles):
     distances.fill(0.)
     weights = np.empty([M,1])
     weights.fill(1./M)
-    sd = 0.75
+    sd = 0.5
 
     for i in range (M):
         distances[:,i] = laser_model(particles[i].reshape((3,1))).reshape((N_measures,)) 
@@ -295,7 +318,10 @@ def plot(label):
     plt.plot(right_wall[0],right_wall[1], c = 'black')
     #for i in range(M):
        #plt.scatter(particles[i,0], particles[i,1], marker = (3, 2, particles[i,2]*(180/pi)), c =  z, s = 5)
-    plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 1, robot_loc[2]*(180/pi)), c = '#d62728' , s=70, label = "Real position")
+    t = mpl.markers.MarkerStyle(marker='>')
+    t._transform = t.get_transform().rotate_deg(degrees(robot_loc[2]))
+    #plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 1, robot_loc[2]*(180/pi)), c = '#d62728' , s=70, label = "Real position")
+    plt.scatter(robot_loc[0], robot_loc[1], marker = t, c = '#d62728' , s=70, label = "Real position")
     plt.xlabel("x")
     plt.ylabel("y")
     plt.legend(loc='upper left')
@@ -329,6 +355,7 @@ particles = create_particles(M)
 print("Simulation has started!")
 k = 0
 errors.fill(0.)
+
 while(1):
 
     #plotting
@@ -339,12 +366,15 @@ while(1):
 
 
     # Update localization of the robot
-    robot_loc = odometry_model(robot_loc, actions[k][0], actions[k][1]*(pi/180))
+    robot_loc = odometry_model(robot_loc, actions[0], actions[1]*(pi/180))
+    validate_particle(robot_loc)
+    """
     if validate_pos(robot_loc) == 0:
         break #simulation terminates
-    
+    """
+       
     # PREDICT
-    particles = predict(particles, actions[k])
+    particles = predict(particles, actions)
     for i in range (M):
         particles[i] = validate_particle(particles[i])
 

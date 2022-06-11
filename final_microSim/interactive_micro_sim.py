@@ -2,11 +2,12 @@
 
 from turtle import clear, down
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import scipy
 from numpy.random import uniform
 from numpy.random import normal
-from math import cos, sin, sqrt, exp, pi
+from math import cos, degrees, sin, sqrt, exp, pi, radians
 from scipy import stats
 from scipy.stats import gaussian_kde
 import cv2 
@@ -44,32 +45,45 @@ errors = np.empty([upper + 15,3])
 """ Functions """
 
 
+
 # intersection between two lines 
 def line_intersection(line1, line2):
 
-    xdiff = (line1[0][0] - line1[1][0], line2[0][0] - line2[1][0])
-    ydiff = (line1[0][1] - line1[1][1], line2[0][1] - line2[1][1])
+    m1 = (line1[1][1] - line1[0][1]) / (line1[1][0] - line1[0][0])
+    m2 = (line2[1][1] - line2[0][1]) / (line2[1][0] - line2[0][0])
+    b1 = line1[0][1] - m1*line1[0][0]
+    b2 = line2[0][1] - m2*line2[0][0]
 
-    def det(a, b):
-        return a[0] * b[1] - a[1] * b[0]
 
-    div = det(xdiff, ydiff)
-    if div == 0: #Ver se são paralelas
-       return -1 # !Atenção PODE TER QUE SER ALTERADO NO FUTURO!
+    #ver se são paralelas
+    if (m2-m1) == 0:
+         return -1 # !Atenção PODE TER QUE SER ALTERADO NO FUTURO!
 
-    d = (det(*line1), det(*line2))
-    x = det(d, xdiff) / div
-    y = det(d, ydiff) / div
+    if (line1[1][0] - line1[0][0]) == 0: # Recta: x = a
 
-    # intersection is out of bound
-    if ( max(line1[0][0],line1[1][0]) < min(line2[0][0],line2[1][0]) or 
-        max(line2[0][0],line2[1][0]) < min(line1[0][0],line1[1][0]) or
-        max(line1[0][1],line1[1][1]) < min(line2[0][1],line2[1][1]) or 
-        max(line2[0][1],line2[1][1]) < min(line1[0][1],line1[1][1])):
+        x = line1[0][0]
+        y = m2*x + b2
 
-        return -1
+    elif (line2[1][0] - line2[0][0]) == 0:
 
-    return (x,y)
+        x = line2[0][0]
+        y = m1*x + b1
+    
+    else:
+    
+        #y1 = y2
+        x = (b1-b2)/(m2-m1)
+        y = m1*x + b1
+        #if y != (m2*x + b2): print('ERROR:', m2*x + b2)
+
+     # Intersection is in bound
+    if (((x >= max( min(line1[0][0],line1[1][0]), min(line2[0][0],line2[1][0]) )) and
+        (x <= min( max(line1[0][0],line1[1][0]), max(line2[0][0],line2[1][0])))) 
+        and
+        ((y >= max ( min(line1[0][1],line1[1][1]), min(line2[0][1],line2[1][1]))) and
+        (y <= min( max(line1[0][1],line1[1][1]), max(line2[0][1],line2[1][1])))) ):
+
+        return (x,y) 
 
 
 # init_robot_pos():
@@ -101,9 +115,10 @@ def odometry_model(prev_loc, vel, angle):
     loc = np.empty([3,1])
 
     # Target distribution
-    loc[0] = prev_loc[0] + vel*cos(angle) + np.random.normal(loc=0.0, scale=0.2, size=None)
-    loc[1] = prev_loc[1] + vel*sin(angle) + np.random.normal(loc=0.0, scale=0.2, size=None)
-    loc[2] = prev_loc[2] + angle + np.random.normal(loc=0.0, scale=0.1, size=None)
+    loc[2] = prev_loc[2] + angle + np.random.normal(loc=0.0, scale=0.02, size=None)
+    loc[0] = prev_loc[0] + vel*cos(prev_loc[2]) + np.random.normal(loc=0.0, scale=0.02, size=None)
+    loc[1] = prev_loc[1] + vel*sin(prev_loc[2]) + np.random.normal(loc=0.0, scale=0.02, size=None)
+
 
 
     if loc[2] >= (2*pi):
@@ -116,7 +131,7 @@ def odometry_model(prev_loc, vel, angle):
 # validate_pos():
 def validate_pos(loc):
 
-    if loc[0] < lower or loc[0] > upper or loc[1] < lower or loc[1] > upper:
+    if loc[0] < lower or loc[0] > upper + 0.1 or loc[1] < lower or loc[1] > upper + 0.1:
         return 0
     else:
         return 1
@@ -179,7 +194,7 @@ def laser_model(loc):
 
     measures = np.empty([N_measures,1])
     measures.fill(0.)
-    radius = 0 #Variação de ângulo do laser
+    radius = -120 #Variação de ângulo do laser
     reach = 4
     x1 = loc[0][0]
     y1 = loc[1][0]
@@ -187,7 +202,9 @@ def laser_model(loc):
 
     for i in range(N_measures):
 
-        ray = np.array([(x1,y1), (reach*cos(teta + radius*(pi/180)), reach*sin(teta + radius*(pi/180))) ]) #creating line segment
+        ray = np.array([(x1,y1), (x1+reach*cos(teta + radians(radius)), y1+reach*sin(teta + radians(radius)))]) #creating line segment
+        if loc[0] == robot_loc[0] and loc[1] == robot_loc[1] and loc[2] == robot_loc[2]  :
+            plt.plot((x1,reach*cos(teta + radius*(pi/180))+x1),(y1,reach*sin(teta + radius*(pi/180))+y1) , c = '#17becf')
 
         #Intersect
         up = np.array(line_intersection(up_wall, ray))
@@ -196,30 +213,34 @@ def laser_model(loc):
         right =np.array(line_intersection(right_wall, ray))
         
         if (line_intersection(up_wall, ray) != -1 and validate_pos(up) == 1):
-            x2 = up[0] + np.random.normal(loc=0.0, scale=0.07, size=None) #Adding noise two the measures
-            y2 = up[1] + np.random.normal(loc=0.0, scale=0.07, size=None)
+            x2 = up[0] + np.random.normal(loc=0.0, scale=0.05, size=None) #Adding noise two the measures
+            y2 = up[1] + np.random.normal(loc=0.0, scale=0.05, size=None)
             measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) ) 
-            #plt.scatter(up[0], up[1], c = '#d62728' )
+            if loc[0] == robot_loc[0] and loc[1] == robot_loc[1] and loc[2] == robot_loc[2]  :
+                plt.scatter(x2, y2, c = '#d62728' )
 
 
         elif (line_intersection(down_wall, ray) != -1 and validate_pos(down) == 1 ):
-            x2 = down[0] + np.random.normal(loc=0.0, scale=0.07, size=None)
-            y2 = down[1] + np.random.normal(loc=0.0, scale=0.07, size=None)
+            x2 = down[0] + np.random.normal(loc=0.0, scale=0.05, size=None)
+            y2 = down[1] + np.random.normal(loc=0.0, scale=0.05, size=None)
             measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) ) 
-            #plt.scatter(down[0], down[1], c = '#d62728' )
+            if loc[0] == robot_loc[0] and loc[1] == robot_loc[1] and loc[2] == robot_loc[2]  :
+                plt.scatter(x2, y2, c = '#d62728' )
 
 
         elif (line_intersection(left_wall, ray) != -1 and validate_pos(left) == 1 ):
-            x2 = left[0] + np.random.normal(loc=0.0, scale=0.07, size=None)
-            y2 = left[1] + np.random.normal(loc=0.0, scale=0.07, size=None)
+            x2 = left[0] + np.random.normal(loc=0.0, scale=0.05, size=None)
+            y2 = left[1] + np.random.normal(loc=0.0, scale=0.05, size=None)
             measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) ) 
-            #plt.scatter(left[0], left[1], c = '#d62728' )
+            if loc[0] == robot_loc[0] and loc[1] == robot_loc[1] and loc[2] == robot_loc[2]  :
+                plt.scatter(x2, y2, c = '#d62728' )
  
         elif ( line_intersection(right_wall, ray) != -1 and validate_pos(right) == 1):
-            x2 = right[0] + np.random.normal(loc=0.0, scale=0.07, size=None)
-            y2 = right[1] + np.random.normal(loc=0.0, scale=0.07, size=None)
+            x2 = right[0] + np.random.normal(loc=0.0, scale=0.05, size=None)
+            y2 = right[1] + np.random.normal(loc=0.0, scale=0.05, size=None)
             measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) ) 
-            #plt.scatter(right[0], right[1], c = '#d62728' )
+            if loc[0] == robot_loc[0] and loc[1] == robot_loc[1] and loc[2] == robot_loc[2]  :
+                plt.scatter(x2, y2, c = '#d62728' )
 
         radius += radius_var
         
@@ -294,7 +315,10 @@ def plot(label):
     plt.plot(right_wall[0],right_wall[1], c = 'black')
     #for i in range(M):
        #plt.scatter(particles[i,0], particles[i,1], marker = (3, 2, particles[i,2]*(180/pi)), c =  z, s = 5)
-    plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 1, robot_loc[2]*(180/pi)), c = '#d62728' , s=70, label = "Real position")
+    t = mpl.markers.MarkerStyle(marker='>')
+    t._transform = t.get_transform().rotate_deg(degrees(robot_loc[2]))
+    #plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 1, robot_loc[2]*(180/pi)), c = '#d62728' , s=70, label = "Real position")
+    plt.scatter(robot_loc[0], robot_loc[1], marker = t, c = '#d62728' , s=70, label = "Real position")
     plt.xlabel("x")
     plt.ylabel("y")
     plt.show()

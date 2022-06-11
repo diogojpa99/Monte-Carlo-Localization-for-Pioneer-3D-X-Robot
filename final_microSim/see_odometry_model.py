@@ -57,8 +57,8 @@ def odometry_model(prev_loc, vel, angle):
     loc = np.empty([3,1])
 
     # Target distribution
-    loc[0] = prev_loc[0] + vel*cos(angle) 
-    loc[1] = prev_loc[1] + vel*sin(angle) 
+    loc[0] = prev_loc[0] + vel*cos(prev_loc[2]) 
+    loc[1] = prev_loc[1] + vel*sin(prev_loc[2]) 
     loc[2] = prev_loc[2] + angle 
 
 
@@ -73,11 +73,9 @@ def odometry_model_noise(prev_loc, vel, angle):
     loc = np.empty([3,1])
 
     # Target distribution
-    loc[0] = prev_loc[0] + vel*cos(angle) + np.random.normal(loc=0.0, scale=0.2, size=None)
-    loc[1] = prev_loc[1] + vel*sin(angle) + np.random.normal(loc=0.0, scale=0.2, size=None)
-    loc[2] = prev_loc[2] + angle + np.random.normal(loc=0.0, scale=0.15, size=None)
-
-
+    loc[2] = prev_loc[2] + angle + np.random.normal(loc=0.0, scale=0.01, size=None)
+    loc[0] = prev_loc[0] + vel*cos(prev_loc[2]) + np.random.normal(loc=0.0, scale=0.02, size=None)
+    loc[1] = prev_loc[1] + vel*sin(prev_loc[2]) + np.random.normal(loc=0.0, scale=0.02, size=None)
 
     if loc[2] >= (2*pi):
         loc[2] = 0 + 2*pi - loc[2]

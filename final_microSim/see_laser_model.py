@@ -2,11 +2,12 @@
 
 from turtle import clear, down
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import scipy
 from numpy.random import uniform
 from numpy.random import normal
-from math import cos, sin, sqrt, exp, pi
+from math import cos, sin, sqrt, exp, pi, radians, degrees
 from scipy import stats
 import cv2 
 #import shapely as shapely 
@@ -15,49 +16,47 @@ import cv2
 """ Functions """
 
 # intersection between two lines 
-# !Atenção POSSO TER QUE ALTERAR O RETORNO '-1' NO FUTURO
 def line_intersection(line1, line2):
 
-    xdiff = (line1[0][0] - line1[1][0], line2[0][0] - line2[1][0])
-    ydiff = (line1[0][1] - line1[1][1], line2[0][1] - line2[1][1])
+    m1 = (line1[1][1] - line1[0][1]) / (line1[1][0] - line1[0][0])
+    m2 = (line2[1][1] - line2[0][1]) / (line2[1][0] - line2[0][0])
+    b1 = line1[0][1] - m1*line1[0][0]
+    b2 = line2[0][1] - m2*line2[0][0]
 
-    def det(a, b):
-        return a[0] * b[1] - a[1] * b[0]
 
-    div = det(xdiff, ydiff)
-    if div == 0: #Ver se são paralelas
-       return -1 
+    #ver se são paralelas
+    if (m2-m1) == 0:
+         return -1 # !Atenção PODE TER QUE SER ALTERADO NO FUTURO!
 
-    d = (det(*line1), det(*line2))
-    x = det(d, xdiff) / div
-    y = det(d, ydiff) / div
+    if (line1[1][0] - line1[0][0]) == 0: # Recta: x = a
 
-    """
-    print('inspect:')
-    print(min ( min(line1[0][0],line1[1][0]), min(line2[0][0],line2[1][0]) ))
-    print(max( max(line1[0][0],line1[1][0]), max(line2[0][0],line2[1][0])))
-    print(x)
-    print('end')
-    """
+        x = line1[0][0]
+        y = m2*x + b2
 
-    """
-    if ((x < max( min(line1[0][0],line1[1][0]), min(line2[0][0],line2[1][0]) )) or 
-        (x > min( max(line1[0][0],line1[1][0]), max(line2[0][0],line2[1][0]))) or
-        (y < max ( min(line1[0][1],line1[1][1]), min(line2[0][1],line2[1][1]) )) or 
-        (y > min( max(line1[0][1],line1[1][1]), max(line2[0][1],line2[1][1])))):
-        
-        print('ups:',point)
-        return -1  # intersection is out of bound
-    """
+    elif (line2[1][0] - line2[0][0]) == 0:
 
-    if ( max(line1[0][0],line1[1][0]) < min(line2[0][0],line2[1][0]) or 
-        max(line2[0][0],line2[1][0]) < min(line1[0][0],line1[1][0]) or
-        max(line1[0][1],line1[1][1]) < min(line2[0][1],line2[1][1]) or 
-        max(line2[0][1],line2[1][1]) < min(line1[0][1],line1[1][1])):
+        x = line2[0][0]
+        y = m1*x + b1
+    
+    else:
+    
+        #y1 = y2
+        x = (b1-b2)/(m2-m1)
+        y = m1*x + b1
+        #if y != (m2*x + b2): print('ERROR:', m2*x + b2)
 
-        return -1
 
-    return (x,y)
+    # intersection is in bound
+    if (((x >= max( min(line1[0][0],line1[1][0]), min(line2[0][0],line2[1][0]) )) and
+        (x <= min( max(line1[0][0],line1[1][0]), max(line2[0][0],line2[1][0])))) 
+        and
+        ((y >= max ( min(line1[0][1],line1[1][1]), min(line2[0][1],line2[1][1]))) and
+        (y <= min( max(line1[0][1],line1[1][1]), max(line2[0][1],line2[1][1])))) ):
+
+        return (x,y)  
+
+    return -1
+
 
 
 # init_robot_pos():
@@ -83,13 +82,17 @@ def init_robot_pos():
 # angle : Angle read from the /twits topic
 # In the simulation we obtain vel & angle from the terminal
 # Returns: The localization of the robot at time t+1
+# odometry model with noise
 def odometry_model(prev_loc, vel, angle):
     loc = np.empty([3,1])
 
     # Target distribution
-    loc[0] = prev_loc[0] + vel*cos(angle) + np.random.normal(loc=0.0, scale=0.1, size=None)
-    loc[1] = prev_loc[1] + vel*sin(angle) + np.random.normal(loc=0.0, scale=0.1, size=None)
     loc[2] = prev_loc[2] + angle + np.random.normal(loc=0.0, scale=0.1, size=None)
+    loc[0] = prev_loc[0] + vel*cos(prev_loc[2]) + np.random.normal(loc=0.0, scale=0.15, size=None)
+    loc[1] = prev_loc[1] + vel*sin(prev_loc[2]) + np.random.normal(loc=0.0, scale=0.15, size=None)
+
+    if loc[2] >= (2*pi):
+        loc[2] = 0 + 2*pi - loc[2]
 
 
     return loc 
@@ -151,18 +154,18 @@ def predict(particles, actions):
 #Modelo do laser
 def laser_model(loc):
 
-    radius = 0 #Variação de ângulo do laser
-    reach = 15
+    radius = -120  #Variação de ângulo do laser
+    reach = 4
     x = loc[0][0]
     y = loc[1][0]
     teta = loc[2][0]
 
-    for i in range(10):
+    for i in range(24):
 
-        ray = np.array([(x,y), (reach*cos(teta + radius*(pi/180)), reach*sin(teta + radius*(pi/180))) ]) #creating line segment
+        ray = np.array([(x,y), (x+reach*cos(teta + radians(radius)), y+reach*sin(teta + radians(radius))) ]) #creating line segment
 
         #plotting
-        plt.plot((x,reach*cos(teta + radius*(pi/180))),(y,reach*sin(teta + radius*(pi/180))) , c = '#17becf')
+        plt.plot((x,reach*cos(teta + radius*(pi/180))+x),(y,reach*sin(teta + radius*(pi/180))+y) , c = '#17becf')
 
 
         #Intersect
@@ -170,6 +173,12 @@ def laser_model(loc):
         down =np.array(line_intersection(down_wall, ray))
         left =np.array(line_intersection(left_wall, ray))
         right =np.array(line_intersection(right_wall, ray))
+        """
+        print(up)
+        print(down)
+        print(left)
+        print(right)
+        """
         
         if (line_intersection(up_wall, ray) != -1 and validate_pos(up) == 1):
             x2 = up[0] + np.random.normal(loc=0.0, scale=0.07, size=None) #Adding noise two the measures
@@ -193,7 +202,7 @@ def laser_model(loc):
             y2 = right[1] + np.random.normal(loc=0.0, scale=0.07, size=None)
             plt.scatter(x2, y2, c = '#d62728' )
         
-        radius += 2
+        radius += 10
     
     return
 
@@ -257,7 +266,10 @@ while(1):
     plt.plot(up_wall[0],up_wall[1], c = 'black')
     plt.plot(left_wall[0],left_wall[1], c = 'black')
     plt.plot(right_wall[0],right_wall[1], c = 'black')
-    plt.scatter(robot_loc[0], robot_loc[1], marker = (3, 0, robot_loc[2]*(180/pi)), c = '#d62728' )
+    t = mpl.markers.MarkerStyle(marker='>')
+    t._transform = t.get_transform().rotate_deg(degrees(robot_loc[2]))
+    #plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 1, robot_loc[2]*(180/pi)), c = '#d62728' , s=70, label = "Real position")
+    plt.scatter(robot_loc[0], robot_loc[1], marker = t, c = '#d62728' , s=70, label = "Real position")
     #for i in range(M):
         #plt.scatter(particles[i,0], particles[i,1], marker = (3, 2, particles[i,2]*(180/pi)), c =  '#17becf', s = 5)
     plt.show()
