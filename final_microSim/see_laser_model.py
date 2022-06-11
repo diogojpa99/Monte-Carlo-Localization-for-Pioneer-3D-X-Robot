@@ -28,7 +28,7 @@ def line_intersection(line1, line2):
     if (m2-m1) == 0:
          return -1 # !Atenção PODE TER QUE SER ALTERADO NO FUTURO!
 
-    if (line1[1][0] - line1[0][0]) == 0: # Recta: x = a
+    elif (line1[1][0] - line1[0][0]) == 0: # Recta: x = a
 
         x = line1[0][0]
         y = m2*x + b2
@@ -38,22 +38,32 @@ def line_intersection(line1, line2):
         x = line2[0][0]
         y = m1*x + b1
     
-    else:
+    elif ( m1 == 0):
+
+        y = b1
+        x = (y-b2)/m2
     
+    elif ( m2 == 0):
+
+        y = b2
+        x = (y-b1)/m1
+    
+    else:
+
         #y1 = y2
         x = (b1-b2)/(m2-m1)
         y = m1*x + b1
         #if y != (m2*x + b2): print('ERROR:', m2*x + b2)
 
-
-    # intersection is in bound
+    
     if (((x >= max( min(line1[0][0],line1[1][0]), min(line2[0][0],line2[1][0]) )) and
         (x <= min( max(line1[0][0],line1[1][0]), max(line2[0][0],line2[1][0])))) 
         and
         ((y >= max ( min(line1[0][1],line1[1][1]), min(line2[0][1],line2[1][1]))) and
         (y <= min( max(line1[0][1],line1[1][1]), max(line2[0][1],line2[1][1])))) ):
 
-        return (x,y)  
+        return (x,y)  # intersection is out of bound
+
 
     return -1
 
