@@ -22,7 +22,8 @@ import cv2
 map = np.array([[(0,2), (0,10)],
                 [(0,10), (10,10)],
                 [(10,10), (10,2)],
-                [(0,2), (10,2)]] ) 
+                [(0,2), (4,2)],
+                [(5.5,2), (10,2)]] ) 
 
 n_walls = map.shape[0]
 #Rectangle:
@@ -407,10 +408,10 @@ while(1):
     errors[k][2] = abs(np.average(particles[:,2])-robot_loc[2][0])
     print("Error:",errors[k][0], errors[k][1], errors[k][2]*(180/pi))
 
-    if (errors[k][0] < 0.01) and (errors[k][1] < 0.01) and (errors[k][2] < 0.01):
-        break
-
     k +=1
+
+    if ( (errors[k][0] < 0.01) and (errors[k][1] < 0.01) and (errors[k][2] < 0.01) or k == last_iteration):
+        break
     
     
 
