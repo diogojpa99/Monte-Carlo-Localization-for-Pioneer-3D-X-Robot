@@ -53,7 +53,6 @@ errors = np.empty([last_iteration,3])
 
 
 
-
 """  ************************************ Functions  ******************************************** """
 
 
@@ -369,7 +368,7 @@ plt.ion()
 #Start simulation
 print("Simulation has started!")
 k = 0
-errors.fill(0.)
+errors.fill(1.)
 while(1):
 
     #plotting
@@ -410,7 +409,7 @@ while(1):
 
     k +=1
 
-    if ( (errors[k][0] < 0.01) and (errors[k][1] < 0.01) and (errors[k][2] < 0.01) or k == last_iteration):
+    if ( ((errors[k][0] < 0.01) and (errors[k][1] < 0.01) and (errors[k][2] < 0.01)) or k == last_iteration-1):
         break
     
     
@@ -425,7 +424,7 @@ theta_error = theta_error[ theta_error !=0]
 
 plt.ioff()
 plt.close()
-plt.title('errors')
+plt.title('Absolute Errors between Real Position and Predict')
 plt.plot(x_error, c = '#bcbd22', label = "x" )
 plt.plot(y_error, c = '#9467bd', label = "y" )
 plt.plot(theta_error, c = '#e377c2', label = "theta" )
