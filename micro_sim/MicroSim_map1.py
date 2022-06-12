@@ -1,20 +1,10 @@
 """ *********************************** Libraries *********************************************** """
 
-from turtle import clear, down
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy
 from numpy.random import uniform
-from numpy.random import normal
 from math import cos, sin, sqrt, exp, pi, radians, degrees
-from scipy import stats
 from scipy.stats import gaussian_kde
-import matplotlib as mpl
-import cv2 
-
-
-
-
 
 """ ************************************* Global Variables ****************************************  """
 
@@ -47,6 +37,7 @@ radius_var = 6
 actions = np.empty([2,1])
 actions[0] = 1
 actions[1] = 15
+
 
 # Last Iteration
 last_iteration = 100
@@ -423,11 +414,11 @@ while(1):
     print('Real Localization:', robot_loc[0][0],robot_loc[1][0],robot_loc[2][0]*(180/pi))
 
     # Centroid of the cluster of particles
-    print("Predicted Localization:", np.average(particles[:,0]), np.average(particles[:,1]), np.average(particles[:,2])*(180/pi))
+    print("Predicted Localization:", np.average(particles[:,0]), np.average(particles[:,1]), np.average(particles[:,2]*(180/pi)))
     errors[k][0] = abs(np.average(particles[:,0])-robot_loc[0][0])
     errors[k][1] = abs(np.average(particles[:,1])-robot_loc[1][0])
     errors[k][2] = abs(np.average(particles[:,2])-robot_loc[2][0])
-    print("Error:",errors[k][0], errors[k][1], errors[k][2]*(180/pi))
+    print("Error:",errors[k][0], errors[k][1], degrees(errors[k][2]))
 
     k +=1
 

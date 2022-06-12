@@ -1,19 +1,10 @@
 """ *********************************** Libraries *********************************************** """
 
-from turtle import clear, down
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy
 from numpy.random import uniform
-from numpy.random import normal
 from math import cos, sin, sqrt, exp, pi, radians, degrees
-from scipy import stats
 from scipy.stats import gaussian_kde
-import matplotlib as mpl
-import cv2 
-
-
-
 
 
 """ ************************************* Global Variables ****************************************  """
@@ -34,7 +25,7 @@ lower = 0
 upper = 10
 
 # Number of particles
-M = 500
+M = 400
 
 # Number of measures of the laser model
 N_measures = 40
@@ -47,10 +38,10 @@ radius_var = 6
 # action[1] : Rotation
 actions = np.empty([2,1])
 actions[0] = 1
-actions[1] = 15
+actions[1] = 18
 
 # Last Iteration
-last_iteration = 100
+last_iteration = 85
 
 # Errors
 errors = np.empty([last_iteration,3])
@@ -149,7 +140,7 @@ def odometry_model(prev_loc, deltaD, rotation):
     loc[2] = prev_loc[2] + rotation + np.random.normal(loc=0.0, scale=0.01, size=None)
 
     if loc[2] >= (2*pi):
-        loc[2] = 0 + 2*pi - loc[2]
+        loc[2] = loc[2] - 2*pi
 
     return loc 
 
@@ -259,8 +250,8 @@ def laser_model(loc):
 
         if (intersect.shape == (2,) and validate_pos(intersect) == 1):
 
-            x2 = intersect[0] + np.random.normal(loc=0.0, scale=0.07, size=None) #Adding noise two the measures
-            y2 = intersect[1] + np.random.normal(loc=0.0, scale=0.07, size=None)
+            x2 = intersect[0] + np.random.normal(loc=0.0, scale=0.045, size=None) #Adding noise two the measures
+            y2 = intersect[1] + np.random.normal(loc=0.0, scale=0.045, size=None)
 
             measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) )
 
@@ -342,14 +333,14 @@ def plot(label):
     plt.title(label)
 
     # Plot particles
-    plt.scatter(x, y, c=z, s=5, label = "particles")
+    plt.scatter(x, y, c=z, s=10, label = "particles")
 
     # Plot Map
     for i in range(n_walls):
         plt.plot((map[i][0][0],map[i][1][0]),(map[i][0][1],map[i,1,1]), c = 'black')
 
     # Plot robot
-    plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = '#d62728' , s=80, label = "Real position", edgecolors='black')
+    plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = '#d62728' , s=100, label = "Real position", edgecolors='black')
     plt.plot((robot_loc[0],(1/10)*cos(robot_loc[2])+robot_loc[0]),(robot_loc[1],(1/10)*sin(robot_loc[2])+robot_loc[1]), c = '#17becf')
 
     plt.xlabel("x")
@@ -391,7 +382,7 @@ errors.fill(1.)
 while(1):
 
     # Plotting
-    plot('Map after Resampling')
+    plot('Simulation')
 
     # *********************** Robot simulation ******************************** #
 
