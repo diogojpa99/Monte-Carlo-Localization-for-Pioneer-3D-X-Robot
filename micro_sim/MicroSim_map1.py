@@ -23,7 +23,7 @@ lower = 0
 upper = 10
 
 # Number of particles
-M = 500
+M = 300
 
 # Number of measures of the laser model
 N_measures = 40
@@ -36,7 +36,7 @@ radius_var = 6
 # action[1] : Rotation
 actions = np.empty([2,1])
 actions[0] = 1
-actions[1] = 15
+actions[1] = 17
 
 
 # Last Iteration
@@ -331,12 +331,13 @@ def plot(label):
 
     plt.title(label)
 
-    # Plot particles
-    plt.scatter(x, y, c=z, s=5, label = "particles")
 
     # Plot Map
     for i in range(n_walls):
         plt.plot((map[i][0][0],map[i][1][0]),(map[i][0][1],map[i,1,1]), c = 'black')
+    
+    # Plot Particles
+    plt.scatter(x, y, c=z, s=5, label = "particles")
 
     # Plot robot
     plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = '#d62728' , s=80, label = "Real position", edgecolors='black')
@@ -359,8 +360,6 @@ def plot(label):
 """ main() """
 
 
-
-
 # loc: Localization of the robot
 robot_loc = init_robot_pos()
 
@@ -373,7 +372,6 @@ for i in range (M):
 plt.ion()
 
 #Start simulation
-
 print("Simulation has started!")
 k = 0
 errors.fill(1.)
@@ -382,32 +380,43 @@ while(1):
 
     # Plotting
     plot('Map after Resampling')
+    print(actions[0],actions[1])
 
     # *********************** Robot simulation ******************************** #
+    if ( k == 25 or k == 25): #0
+        actions[0] = actions[1] =  0
+    elif ( k > 25):
+        actions[0] = 1
+        actions[1] = 15
+
+    robot_prev_loc = robot_loc
 
     # Update localization of the robot
-    robot_loc = odometry_model(robot_loc, actions[0], radians(actions[1]))
-    robot_loc = validate_loc(robot_loc)
+    if (actions[0] != 0 and actions[1] != 0):
+        robot_loc = odometry_model(robot_loc, actions[0], radians(actions[1]))
+        robot_loc = validate_loc(robot_loc)
 
     # Retrieving data from the laser
     robot_measures = laser_model(robot_loc)
 
     # ************************** Algorithm  ********************************** #
 
-    # PREDICT
-    particles = predict(particles, actions)
-    for i in range (M):
-        particles[i] = validate_loc(particles[i])
-    
-    # UPDATE
-    weights = update(robot_measures,particles)
+    if (robot_prev_loc[0][0] == robot_loc[0][0] and robot_prev_loc[1][0] == robot_loc[1][0] and robot_prev_loc[2][0] == robot_loc[2][0]):
+        print('DO NOTHING')
+    else:
+        # PREDICT
+        particles = predict(particles, actions)
+        for i in range (M):
+            particles[i] = validate_loc(particles[i])
+        
+        # UPDATE
+        weights = update(robot_measures,particles)
 
-    
-    # RESAMPLING
-    indexes = systematic_resample(weights)
-    particles[:] = particles[indexes]
-    weights[:] = weights[indexes]
-    weights /= np.sum(weights)
+        # RESAMPLING
+        indexes = systematic_resample(weights)
+        particles[:] = particles[indexes]
+        weights[:] = weights[indexes]
+        weights /= np.sum(weights)
 
     #Output
     print("Iteration nº:",k+1)

@@ -25,7 +25,7 @@ lower = 0
 upper = 10
 
 # Number of particles
-M = 400
+M = 300
 
 # Number of measures of the laser model
 N_measures = 40
@@ -41,7 +41,7 @@ actions[0] = 1
 actions[1] = 18
 
 # Last Iteration
-last_iteration = 85
+last_iteration = 100
 
 # Errors
 errors = np.empty([last_iteration,3])
@@ -331,13 +331,13 @@ def plot(label):
     x, y, z = x[idx], y[idx], z[idx]
 
     plt.title(label)
-
-    # Plot particles
-    plt.scatter(x, y, c=z, s=10, label = "particles")
-
+    
     # Plot Map
     for i in range(n_walls):
         plt.plot((map[i][0][0],map[i][1][0]),(map[i][0][1],map[i,1,1]), c = 'black')
+    
+    # Plot particles
+    plt.scatter(x, y, c=z, s=10, label = "particles")
 
     # Plot robot
     plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = '#d62728' , s=100, label = "Real position", edgecolors='black')
@@ -357,13 +357,13 @@ def plot(label):
 
 
 
-""" main() """
 
-
+"""  ************************************ main()  ******************************************** """
 
 
 # loc: Localization of the robot
 robot_loc = init_robot_pos()
+robot_prev_loc = robot_loc
 
 #Create particles
 particles = create_particles(M)
@@ -374,7 +374,6 @@ for i in range (M):
 plt.ion()
 
 #Start simulation
-
 print("Simulation has started!")
 k = 0
 errors.fill(1.)
@@ -382,33 +381,39 @@ errors.fill(1.)
 while(1):
 
     # Plotting
-    plot('Simulation')
+    plot('Particle Filter Simulation')
 
     # *********************** Robot simulation ******************************** #
+    robot_prev_loc = robot_loc
 
     # Update localization of the robot
-    robot_loc = odometry_model(robot_loc, actions[0], radians(actions[1]))
-    robot_loc = validate_loc(robot_loc)
+    if (actions[0] != 0 and actions[1] != 0):
+        robot_loc = odometry_model(robot_loc, actions[0], radians(actions[1]))
+        robot_loc = validate_loc(robot_loc)
 
     # Retrieving data from the laser
     robot_measures = laser_model(robot_loc)
 
     # ************************** Algorithm  ********************************** #
 
-    # PREDICT
-    particles = predict(particles, actions)
-    for i in range (M):
-        particles[i] = validate_loc(particles[i])
-    
-    # UPDATE
-    weights = update(robot_measures,particles)
+    # If robot does not move we do nothing
+    if (robot_prev_loc[0][0] == robot_loc[0][0] and robot_prev_loc[1][0] == robot_loc[1][0] and robot_prev_loc[2][0] == robot_loc[2][0]):
+        print('Robot did not move')
+    else:
+        # PREDICT
+        particles = predict(particles, actions)
+        for i in range (M):
+            particles[i] = validate_loc(particles[i])
+        
+        # UPDATE
+        weights = update(robot_measures,particles)
 
-    
-    # RESAMPLING
-    indexes = systematic_resample(weights)
-    particles[:] = particles[indexes]
-    weights[:] = weights[indexes]
-    weights /= np.sum(weights)
+        # RESAMPLING
+        indexes = systematic_resample(weights)
+        particles[:] = particles[indexes]
+        weights[:] = weights[indexes]
+        weights /= np.sum(weights)
+
 
     #Output
     print("Iteration nº:",k+1)
