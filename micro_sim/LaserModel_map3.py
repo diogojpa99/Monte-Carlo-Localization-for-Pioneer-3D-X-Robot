@@ -374,7 +374,7 @@ plt.ion()
 #Start simulation
 print("Simulation has started!")
 k = 0
-errors.fill(0.)
+errors.fill(1.)
 while(1):
 
     #plotting

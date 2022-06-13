@@ -9,21 +9,49 @@ from scipy.stats import gaussian_kde
 """ ************************************* Global Variables ****************************************  """
 
 # Create Map
+"""
 map = np.array([[(0,2), (0,10)],
                 [(0,10), (10,10)],
                 [(10,10), (10,2)],
                 [(0,2), (4,2)],
-                [(5.5,2), (10,2)]] ) 
+                [(6,2), (10,2)]] ) 
+"""
+"""
+map = np.array([[(0,2), (0,8)],
+                [(0,10), (4,10)],
+                [(6,10), (9,10)],
+                [(9,10), (10,9)],
+                [(10,9), (10,2)],
+                [(0,2), (4,2)],
+                [(6,2), (10,2)],
+                [(4,10), (5,9)],
+                [(6,10), (5,9)]] ) 
+"""
+map = np.array([[(2,0), (15,0)],
+                [(15, 0), (15,4)],
+                [(15,4), (6,4)],
+                [(6,4), (5,3)],
+                [(5,3), (4,4)],
+                [(4,4), (3, 4)],
+                [(3,4), (3,12)],
+                [(3,15), (1.5,16)],
+                [(1.5,16),(0,15)],
+                [(0,15), (0,0)]] ) 
+
 
 # Number of walls
 n_walls = map.shape[0]
 
 # Rectangle
 lower = 0
-upper = 10
+upper = 15
 
 # Number of particles
-M = 300
+M = 500
+
+# Weights
+weights = np.empty([M,1])
+weights.fill(0.)
 
 # Number of measures of the laser model
 N_measures = 40
@@ -35,12 +63,31 @@ radius_var = 6
 # action[0] : Distance traveled
 # action[1] : Rotation
 actions = np.empty([2,1])
-actions[0] = 1
-actions[1] = 17
+actions = np.array([(1,-90),(1,0),(1,0),(1,0),(1,0),(1,0), (1,0), (1,0),(1,0),(1,0), (1,0),(1,0),(1,0),
+                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
+                    (1,180),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0), (1,0), 
+                    (1,-90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
+                    (1,180),(1,0),(1,0), (1,0),(1,0), (1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
+                    (1,90),(1,0),(1,0), (1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
+                    (1,180),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0), (1,0),(1,0), (1,0),(1,0),(1,0),(0,0),
+                    (1,-90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
+                    (1,180),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0), (1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
+                    (1,90),(1,0), (1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
+                    (1,180),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0), (1,0),(1,0), (1,0),(1,0),(1,0),
+                    (1,-90), (1,0), (1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
+                    (1,180),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0), (1,0),(1,0), (1,0),(1,0),(1,0),(1,0),
+                    (1,90),(1,0), (1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
+                    (1,180),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0), (1,0),(1,0), (1,0),(1,0),(1,0),(1,0)])
 
 
 # Last Iteration
-last_iteration = 100
+last_iteration = actions.shape[0]
+
+# n_eff 
+n_eff = M
+
+# Resampling Flag
+resampling_flag = 1
 
 # Errors
 errors = np.empty([last_iteration,3])
@@ -115,8 +162,8 @@ def line_intersection(line1, line2):
 def init_robot_pos():
 
     loc = np.empty([3,1])
-    loc[0] = 2
-    loc[1] = 4
+    loc[0] = 1
+    loc[1] = 15
     loc[2] = 0
 
     return loc
@@ -136,7 +183,7 @@ def odometry_model(prev_loc, deltaD, rotation):
     # Target distribution
     loc[0] = prev_loc[0] + deltaD*cos(prev_loc[2]) + np.random.normal(loc=0.0, scale=0.02, size=None)
     loc[1] = prev_loc[1] + deltaD*sin(prev_loc[2]) + np.random.normal(loc=0.0, scale=0.02, size=None)
-    loc[2] = prev_loc[2] + rotation + np.random.normal(loc=0.0, scale=0.01, size=None)
+    loc[2] = prev_loc[2] + rotation + np.random.normal(loc=0.0, scale=0.02, size=None)
 
     if loc[2] >= (2*pi):
         loc[2] = 0 + 2*pi - loc[2]
@@ -151,7 +198,7 @@ def odometry_model(prev_loc, deltaD, rotation):
 
 def validate_pos(loc):
 
-    if loc[0] < lower - 0.1 or loc[0] > upper +0.1 or loc[1] < 2-0.1 or loc[1] > upper+0.1:
+    if loc[0] < lower - 0.1 or loc[0] > upper +0.1 or loc[1] < lower -0.1 or loc[1] > upper+0.1:
         return 0
     else:
         return 1
@@ -166,18 +213,18 @@ def validate_loc(loc):
 
     if loc[0] < lower: loc[0] = lower
     elif loc[0] > upper: loc[0] = upper
-    if loc[1] < (lower + 2): loc[1] = lower +2
+    if loc[1] < lower: loc[1] = lower
     elif loc[1] > upper: loc[1] = upper
 
-    if loc[0] > 12 and loc[1] > 13 : 
-        avg_pnt = ((12+12)/2,(13+15)/2) 
+    if loc[0] > 3 and loc[1] > 4 : 
+        avg_pnt = ((3+3)/2,(3+15)/2) 
         err1 = sqrt( pow(avg_pnt[0]-loc[0], 2) + pow( avg_pnt[1]-loc[0],2) ) 
-        avg_pnt = ((12+15)/2,(13+13)/2) 
+        avg_pnt = ((6+15)/2,(3+3)/2) 
         err2 = sqrt( pow(avg_pnt[0]-loc[0], 2) + pow( avg_pnt[1]-loc[0],2) ) 
         if err1 < err2 :
-            loc[0] = 12
+            loc[0] = 3
         else:
-            loc[1] = 13
+            loc[1] = 3
     
 
     return loc
@@ -196,8 +243,10 @@ def validate_loc(loc):
 def create_particles(M):
     
     particles = np.empty([M, 3])
-    particles[:, 0] = uniform(lower, upper, size = M)
-    particles[:, 1] = uniform(lower, upper, size = M)
+    particles[0:int(M/2), 0] = uniform(0, 3, size = int(M/2))
+    particles[0:int(M/2), 1] = uniform(0, 15, size = int(M/2))
+    particles[int(M/2):M, 0] = uniform(0, 15, size = int(M/2))
+    particles[int(M/2):M, 1] = uniform(0, 3, size = int(M/2))
     particles[:, 2] = uniform(0, 2*pi, size = M)
     
     return particles
@@ -249,8 +298,8 @@ def laser_model(loc):
 
         if (intersect.shape == (2,) and validate_pos(intersect) == 1):
 
-            x2 = intersect[0] + np.random.normal(loc=0.0, scale=0.07, size=None) #Adding noise two the measures
-            y2 = intersect[1] + np.random.normal(loc=0.0, scale=0.07, size=None)
+            x2 = intersect[0] + np.random.normal(loc=0.0, scale=0.05, size=None) #Adding noise two the measures
+            y2 = intersect[1] + np.random.normal(loc=0.0, scale=0.05, size=None)
 
             measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) )
 
@@ -265,28 +314,81 @@ def laser_model(loc):
 
     return measures
 
+# normal_distribution():
+def normal_dist(x , mean , sd):
+
+    prob = ( 1 / (sd*sqrt(2*pi)) ) *exp(-0.5* pow(1/sd,2) * pow( x - mean, 2))
+
+    return prob
+
 # UPDATE
-def update(measurments, particles):
+def update(w, measurments, particles, resampling_flag):
 
 
     # Distance from each particle to each landmark
     # We have N_measures measures and M particles
     distances = np.empty([N_measures,M])
     distances.fill(0.)
-    weights = np.empty([M,1])
-    weights.fill(1./M)
-    sd = 0.5 #Standard diviation
+
+    if resampling_flag == 1:
+        w = np.empty([M,1])
+        w.fill(0.)
+    elif resampling_flag == 0:
+        print('298: NO RESAMPLING')
+        prev_weights = w
+
+    sd = 0.05 #Standard deviation
 
     for i in range (M):
         distances[:,i] = laser_model(particles[i].reshape((3,1))).reshape((N_measures,)) 
 
+    """
     #The weights are the product of the likelihoods of the measurments  
     for i in range (M):
-        for j in range (len(measurments)):
-            weights[i] += exp(-0.5* pow(1/sd,2) * pow( measurments[j] - distances[j][i], 2)) 
 
-    weights /= np.sum(weights) #Normalizar
-   
+        for j in range (len(measurments)):
+            if resampling_flag == 1:
+                w[i] = w[i] + exp(-0.5* pow(1/sd,2) * pow( measurments[j] - distances[j][i], 2)) 
+            elif resampling_flag == 0:
+                print('No resampling')
+                w[i] = w[i] + exp(-0.5* pow(1/sd,2) * pow( measurments[j] - distances[j][i], 2)) + prev_weights[i]
+                
+    w[i] = w[i] + 1
+    """
+    '''
+    #The weights are the product of the likelihoods of the measurments  
+    for i in range (M):
+
+        for j in range (len(measurments)):
+                w[i] = w[i]* normal_dist(measurments[j], distances[j][i], sd) 
+        
+        if ( resampling_flag == 0):
+            w[i] = w[i] * prev_weights[i]
+
+        w[i] = w[i] + 1
+    '''
+    
+    
+    #The weights are the product of the likelihoods of the measurments  
+    for i in range (M):
+
+        for j in range (len(measurments)):
+                w[i] += exp(-0.5* pow(1/sd,2) * pow( measurments[j] - distances[j][i], 2)) 
+        
+        if (resampling_flag == 0):
+            w[i] += prev_weights[i]
+    
+
+
+    w = w / w.sum() #Normalizar
+
+    #If all the weigths are the same do not resample
+    if np.all(w == w[0]):
+        resampling_flag = 0
+
+        
+    print(w)
+
     """
     # Plot Weights
     plt.close()
@@ -299,7 +401,7 @@ def update(measurments, particles):
     plt.close()
     """
 
-    return weights
+    return w
 
 # RESAMPLING
 def systematic_resample(weights):
@@ -378,22 +480,17 @@ errors.fill(1.)
 
 while(1):
 
+    n_eff_inverse = 0
+
     # Plotting
     plot('Map after Resampling')
-    print(actions[0],actions[1])
 
     # *********************** Robot simulation ******************************** #
-    if ( k == 25 or k == 25): #0
-        actions[0] = actions[1] =  0
-    elif ( k > 25):
-        actions[0] = 1
-        actions[1] = 15
-
     robot_prev_loc = robot_loc
 
     # Update localization of the robot
-    if (actions[0] != 0 and actions[1] != 0):
-        robot_loc = odometry_model(robot_loc, actions[0], radians(actions[1]))
+    if (actions[k][0] != 0 or actions[k][1] != 0):
+        robot_loc = odometry_model(robot_loc, actions[k][0], radians(actions[k][1]))
         robot_loc = validate_loc(robot_loc)
 
     # Retrieving data from the laser
@@ -405,18 +502,35 @@ while(1):
         print('DO NOTHING')
     else:
         # PREDICT
-        particles = predict(particles, actions)
+        particles = predict(particles, actions[k])
         for i in range (M):
             particles[i] = validate_loc(particles[i])
         
         # UPDATE
-        weights = update(robot_measures,particles)
+        weights = update(weights, robot_measures, particles, resampling_flag)
+        
+        # n_eff
+        for n in range (M):
+            n_eff_inverse += pow(weights[n],2)
+        
+        n_eff = 1/n_eff_inverse
 
+        if (n_eff < M/2):
+            resampling_flag = 1
+        else:
+            resampling_flag = 0
+        
         # RESAMPLING
-        indexes = systematic_resample(weights)
-        particles[:] = particles[indexes]
-        weights[:] = weights[indexes]
-        weights /= np.sum(weights)
+        if (resampling_flag == 1):
+            print('Resampled! n_eff=',n_eff)
+            indexes = systematic_resample(weights)
+            particles[:] = particles[indexes]
+            weights[:] = weights[indexes]
+            weights /= np.sum(weights)
+        else:
+            print('Did not resample, n_eff=',n_eff)
+
+        
 
     #Output
     print("Iteration nº:",k+1)

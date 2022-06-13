@@ -15,7 +15,7 @@ map = np.array([[(0,2), (0,9)],
                 [(9,10), (10,9)],
                 [(10,9), (10,2)],
                 [(0,2), (4,2)],
-                [(5.5,2), (10,2)]] ) 
+                [(6,2), (10,2)]] ) 
 
 # Number of walls
 n_walls = map.shape[0]
@@ -25,7 +25,7 @@ lower = 0
 upper = 10
 
 # Number of particles
-M = 300
+M = 500
 
 # Number of measures of the laser model
 N_measures = 40
@@ -42,6 +42,7 @@ actions[1] = 18
 
 # Last Iteration
 last_iteration = 100
+
 
 # Errors
 errors = np.empty([last_iteration,3])
@@ -287,6 +288,7 @@ def update(measurments, particles):
             weights[i] += exp(-0.5* pow(1/sd,2) * pow( measurments[j] - distances[j][i], 2)) 
 
     weights /= np.sum(weights) #Normalizar
+
    
     """
     # Plot Weights
@@ -301,6 +303,7 @@ def update(measurments, particles):
     """
 
     return weights
+
 
 # RESAMPLING
 def systematic_resample(weights):
