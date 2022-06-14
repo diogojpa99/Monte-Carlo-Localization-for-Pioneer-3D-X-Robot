@@ -9,34 +9,17 @@ from scipy.stats import gaussian_kde
 """ ************************************* Global Variables ****************************************  """
 
 # Create Map
-"""
-map = np.array([[(0,2), (0,10)],
-                [(0,10), (10,10)],
-                [(10,10), (10,2)],
-                [(0,2), (4,2)],
-                [(6,2), (10,2)]] ) 
-"""
-"""
-map = np.array([[(0,2), (0,8)],
-                [(0,10), (4,10)],
+map = np.array([[(3,10), (4,10)],
                 [(6,10), (9,10)],
-                [(9,10), (10,9)],
-                [(10,9), (10,2)],
-                [(0,2), (4,2)],
-                [(6,2), (10,2)],
+                [(10,9), (10,0)],
+                [(0,0), (4,0)],
+                [(6,0), (10,0)],
                 [(4,10), (5,9)],
-                [(6,10), (5,9)]] ) 
-"""
-map = np.array([[(1,0), (15,0)],
-                [(15, 0), (15,4)],
-                [(15,4), (6,4)],
-                [(6,4), (5,3)],
-                [(5,3), (4,4)],
-                [(4,4), (3, 4)],
-                [(3,4), (3,12)],
-                [(3,15), (1.5,14)],
-                [(1.5,14),(0,15)],
+                [(6,10), (5,9)],
+                [(3,4), (3,15)],
+                [(3,15), (0,15)], 
                 [(0,15), (0,0)]] ) 
+
 
 
 # Number of walls
@@ -44,7 +27,7 @@ n_walls = map.shape[0]
 
 # Rectangle
 lower = 0
-upper = 15
+upper = 10
 
 # Number of particles
 M = 500
@@ -200,7 +183,7 @@ def odometry_model(prev_loc, deltaD, rotation, particle_flag):
 
 def validate_pos(loc):
 
-    if loc[0] < lower - 0.1 or loc[0] > upper +0.1 or loc[1] < lower -0.1 or loc[1] > upper+0.1:
+    if loc[0] < lower - 0.1 or loc[0] > upper +0.1 or loc[1] < lower -0.1 or loc[1] > 15 +0.1:
         return 0
     else:
         return 1
@@ -215,20 +198,12 @@ def validate_loc(loc):
 
     if loc[0] < lower: loc[0] = lower
     elif loc[0] > upper: loc[0] = upper
+
     if loc[1] < lower: loc[1] = lower
-    elif loc[1] > upper: loc[1] = upper
 
-    if loc[0] > 3 and loc[1] > 4 : 
-        avg_pnt = ((3+3)/2,(3+15)/2) 
-        err1 = sqrt( pow(avg_pnt[0]-loc[0], 2) + pow( avg_pnt[1]-loc[0],2) ) 
-        avg_pnt = ((6+15)/2,(3+3)/2) 
-        err2 = sqrt( pow(avg_pnt[0]-loc[0], 2) + pow( avg_pnt[1]-loc[0],2) ) 
-        if err1 < err2 :
-            loc[0] = 3
-        else:
-            loc[1] = 4
+    if (loc[0] < 3) and (loc[1] > 15): loc[1] = 15
+    elif loc[1] > upper and loc[0] > 3: loc[1] = upper
     
-
     return loc
 
 
@@ -247,8 +222,8 @@ def create_particles(M):
     particles = np.empty([M, 3])
     particles[0:int(M/2), 0] = uniform(0, 3, size = int(M/2))
     particles[0:int(M/2), 1] = uniform(0, 15, size = int(M/2))
-    particles[int(M/2):M, 0] = uniform(0, 15, size = int(M/2))
-    particles[int(M/2):M, 1] = uniform(0, 3, size = int(M/2))
+    particles[int(M/2):M, 0] = uniform(0, 10, size = int(M/2))
+    particles[int(M/2):M, 1] = uniform(0, 10, size = int(M/2))
     particles[:, 2] = uniform(0, 2*pi, size = M)
     
     return particles
@@ -525,7 +500,7 @@ while(1):
         
         n_eff = 1/n_eff_inverse
 
-        if ( (n_eff < M*(4/5)) or k < 10 ):
+        if ( (n_eff < M*(4/5)) or k < 10):
             resampling_flag = 1
         else:
             resampling_flag = 0
