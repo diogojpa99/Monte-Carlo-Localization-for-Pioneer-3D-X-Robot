@@ -30,7 +30,7 @@ lower = 0
 upper = 10
 
 # Number of particles
-M = 800
+M = 1000
 
 # Weights
 weights = np.empty([M,1])
@@ -49,8 +49,8 @@ actions = np.empty([2,1])
 actions = np.array([(1,-90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
                     (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
                     (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
+                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
                     (1,90),(1,0),(1,0),(1,0),
-                    (1,90),(1,0),(1,0),
                     (1,-90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0)])
 
 
@@ -215,10 +215,10 @@ def validate_loc(loc):
 def create_particles(M):
     
     particles = np.empty([M, 3])
-    particles[0:int(M/10), 0] = uniform(0, 3, size = int(M/10))
-    particles[0:int(M/10), 1] = uniform(10, 15, size = int(M/10))
-    particles[int(M/10):M, 0] = uniform(0, 10, size = int((9*M)/10))
-    particles[int(M/10):M, 1] = uniform(0, 10, size = int((9*M)/10))
+    particles[0:int(M/8), 0] = uniform(0, 3, size = int(M/8))
+    particles[0:int(M/8), 1] = uniform(10, 15, size = int(M/8))
+    particles[int(M/8):M, 0] = uniform(0, 10, size = int((7*M)/8))
+    particles[int(M/8):M, 1] = uniform(0, 10, size = int((7*M)/8))
     particles[:, 2] = uniform(0, 2*pi, size = M)
     
     return particles
@@ -322,7 +322,7 @@ def update(w, measurments, particles, resampling_flag):
     elif resampling_flag == 0:
         prev_weights = w
 
-    sd = 2.5 #Standard deviation
+    sd = 5 #Standard deviation
 
     for i in range (M):
         distances[:,i] = laser_model(particles[i].reshape((3,1))).reshape((N_measures,)) 
@@ -342,13 +342,14 @@ def update(w, measurments, particles, resampling_flag):
     #If all the weigths are the same do not resample
     if np.all(w == w[0]):
         resampling_flag = 0
+
+    likelihood_avg = np.average(w)
+    print("Likelihood Avg:", likelihood_avg)
     
     # Plot Weights
     for i in range(M):
         axis[1].plot( (i,i), (0,w[i]), c = '#d62728' )
 
-
-    
     return w
 
 # RESAMPLING
@@ -406,7 +407,7 @@ def plot(label):
 
 
 
-""" main() """
+""" *********************************** main() *********************************************** """
 
 
 # loc: Localization of the robot
@@ -447,7 +448,7 @@ while(1):
     # ************************** Algorithm  ********************************** #
 
     if (robot_prev_loc[0][0] == robot_loc[0][0] and robot_prev_loc[1][0] == robot_loc[1][0] and robot_prev_loc[2][0] == robot_loc[2][0]):
-        print('Robot did not move')
+        print('ROBOT DID NOT MOVE')
     else:
 
         # PREDICT
@@ -456,7 +457,6 @@ while(1):
             particles[i] = validate_loc(particles[i])
         
         # UPDATE
-        print("Resampling flag=", resampling_flag)
         weights = update(weights, robot_measures, particles, resampling_flag)
         
         # n_eff
@@ -474,17 +474,18 @@ while(1):
         
         # RESAMPLING
         if (resampling_flag == 1):
-            print('Resampled! n_eff=',n_eff)
+            print('RESAMPLE -> n_eff = ',n_eff)
             indexes = systematic_resample(weights)
             particles[:] = particles[indexes]
             weights[:] = weights[indexes]
             weights /= np.sum(weights)
         else:
-            print('Did not resample, n_eff=',n_eff)
+            print('NO RESAMPLE, n_eff=',n_eff)
 
         
 
     #Output
+    print('Output:')
     print('Real Localization:', robot_loc[0][0],robot_loc[1][0],robot_loc[2][0]*(180/pi))
 
     # Centroid of the cluster of particles
@@ -519,7 +520,7 @@ theta_error =  errors[:,2]
 theta_error = theta_error[ theta_error !=0]
 
 plt.ioff()
-plt.close()
+plt.close('all')
 plt.title('Absolute Errors between Real Position and Predict')
 plt.plot(x_error, c = '#bcbd22', label = "x" )
 plt.plot(y_error, c = '#9467bd', label = "y" )
