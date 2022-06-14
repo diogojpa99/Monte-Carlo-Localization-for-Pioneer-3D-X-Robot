@@ -3,7 +3,12 @@ import occupancy_field as occ
 
 from std_msgs.msg import Header
 from geometry_msgs.msg import PoseArray, Pose, Point, Quaternion
+from sensor_msgs.msg import LaserScan
+from nav_msgs.msg import Odometry
+
 from nav_msgs.srv import GetMap
+
+from occupancy_field import OccupancyField
 
 import tf
 
@@ -50,24 +55,32 @@ class Particle(object):
                                            y=orientation_tuple[1],
                                            z=orientation_tuple[2],
                                            w=orientation_tuple[3]))
-
-class Map:
-    def __init__(self):
-        # grab the map from the map server
-
-        rospy.init_node('publisher')
-        
-        self.occupancy_field = occ.OccupancyField()
-        self.bounds =  self.occupancy_field.get_obstacle_bounding_box()
-        self.map_frame = "map"
+       
 
 class Particle_Publisher(object):
-    def __init__(self, map: Map):
+    def __init__(self):
         
-        self.map = map
+        rospy.init_node('publisher')
+
+        #self.occupancy_field = occ.OccupancyField()
+        #self.bounds =  self.occupancy_field.get_obstacle_bounding_box()
+        self.map_frame = "map"
+
         self.num_particles = 1
         self.particle_cloud = []
         self.particle_pub = rospy.Publisher("particlecloud", PoseArray, queue_size=10)
+        self.get_position()
+        rospy.Subscriber("pose", Odometry, self.get_position)
+        print("got pose")
+
+    def get_position(self):
+        data_odom = None
+        while data_odom is None:
+            try:
+                data_odom = rospy.wait_for_message("/pose", Odometry, timeout=1)
+            except:
+                rospy.loginfo("Current odom not ready yet, retrying")
+
 
     def initialize_particle_cloud(self):
         """
@@ -81,8 +94,8 @@ class Particle_Publisher(object):
             # Generate values for and add a new particle!!
             valid = 0
             while valid != 1:
-                x_rel = random.uniform(self.map.bounds[0][0], self.map.bounds[0][1])
-                y_rel = random.uniform(self.map.bounds[1][0], self.map.bounds[1][1])
+                x_rel = random.uniform(self.bounds[0][0], self.bounds[0][1])
+                y_rel = random.uniform(self.bounds[1][0], self.bounds[1][1])
                 valid = self.map.occupancy_field.is_empty(x_rel, y_rel)
                 
             # TODO: Could use a tf transform to add x and y in the robot's coordinate system
@@ -119,7 +132,7 @@ class Particle_Publisher(object):
                                                 poses=pose_particle_cloud))
     
 class LaserModel:
-    def __init__(self, map: Map):
+    def __init__(self):
         self.map = map
 
     def scanner(self):    
@@ -140,12 +153,37 @@ class LaserModel:
                                                 int(range_y / self._map.resolution))
 
         return prob
-    
+
+def callback2(data):
+    dist = []
+    dist.append(data.ranges[72])
+    dist.append(data.ranges[128])
+    dist.append(data.ranges[214])
+    dist.append(data.ranges[299])
+    dist.append(data.ranges[384])
+    dist.append(data.ranges[470])
+    dist.append(data.ranges[555])
+    dist.append(data.ranges[640])
+    dist.append(data.ranges[697])
+    print(dist[0])
+
+def callback1(data):
+    robot_pos =  data.pose.pose
+    rospy.loginfo("Pose %s", robot_pos)
+
+def listener_1():
+    rospy.init_node('listener_new1', anonymous=True)
+    rospy.Subscriber("pose", Odometry, callback1)
+
+def listener_2():
+    #rospy.init_node('listener_new2', anonymous=True)
+    rospy.Subscriber("scan", LaserScan, callback2)
+
 if __name__ == '__main__':
     print("Starting particle publisher!")
     n = Particle_Publisher()
-    i=0
-    while i < 1000:
-        n.initialize_particle_cloud()
-        time.sleep(0.5)
-        i+=1
+    rospy.Rate(0.5)
+    n.initialize_particle_cloud()
+    #listener_1()
+    #listener_2()
+

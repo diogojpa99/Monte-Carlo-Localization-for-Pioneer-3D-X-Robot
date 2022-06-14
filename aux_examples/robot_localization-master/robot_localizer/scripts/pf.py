@@ -72,9 +72,7 @@ class ParticleFilter(object):
 
         # pose_listener responds to selection of a new approximate robot
         # location (for instance using rviz)
-        rospy.Subscriber("initialpose",
-                         PoseWithCovarianceStamped,
-                         self.update_initial_pose)
+        rospy.Subscriber("initialpose", PoseWithCovarianceStamped, self.update_initial_pose)
 
         # enable listening for and broadcasting coordinate transforms
         self.tf_listener = TransformListener()

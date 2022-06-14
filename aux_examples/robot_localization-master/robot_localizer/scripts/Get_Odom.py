@@ -4,6 +4,7 @@ from time import sleep
 from math import pi
 import rospy
 from sensor_msgs.msg import LaserScan
+from geometry_msgs.msg import PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry
 from nav_msgs.msg import OccupancyGrid
 from nav_msgs.srv import GetMap
@@ -26,7 +27,7 @@ MEASURES = {
 def callback1(data):
     my_data = data
     
-    rospy.loginfo("Pose %s", my_data.pose.pose)
+    rospy.loginfo("Pose %s", my_data)
 
 def callback2(data):
     my_data = data
