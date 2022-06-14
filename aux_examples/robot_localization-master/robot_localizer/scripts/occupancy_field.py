@@ -1,5 +1,6 @@
 """ An implementation of an occupancy field that you can use to implement
     your particle filter """
+import random
 
 import rospy
 
@@ -33,6 +34,8 @@ class OccupancyField(object):
             for j in range(self.map.info.height):
                 # occupancy grids are stored in row major order
                 ind = i + j*self.map.info.width
+                #if self.map.data[ind] != -1:
+                    #print(self.map.data[ind])
                 if self.map.data[ind] > 0:
                     total_occupied += 1
                 X[curr, 0] = float(i)
@@ -41,6 +44,7 @@ class OccupancyField(object):
 
         # The coordinates of each occupied grid cell in the map
         occupied = np.zeros((total_occupied, 2))
+        self.size = curr - 1
         curr = 0
         for i in range(self.map.info.width):
             for j in range(self.map.info.height):
@@ -51,7 +55,8 @@ class OccupancyField(object):
                     occupied[curr, 1] = float(j)
                     curr += 1
         # use super fast scikit learn nearest neighbor algorithm
-        nbrs = NearestNeighbors(n_neighbors=1, algorithm="ball_tree").fit(occupied)
+        nbrs = NearestNeighbors(n_neighbors=1,
+                                algorithm="ball_tree").fit(occupied)
         distances, indices = nbrs.kneighbors(X)
 
         self.closest_occ = np.zeros((self.map.info.width, self.map.info.height))
@@ -72,10 +77,8 @@ class OccupancyField(object):
         lower_bounds = self.occupied.min(axis=0)
         upper_bounds = self.occupied.max(axis=0)
         r = self.map.info.resolution
-        return ((lower_bounds[0]*r + self.map.info.origin.position.x,
-                 upper_bounds[0]*r + self.map.info.origin.position.x),
-                (lower_bounds[1]*r + self.map.info.origin.position.y,
-                 upper_bounds[1]*r + self.map.info.origin.position.y))
+        return ((lower_bounds[0]*r + self.map.info.origin.position.x, upper_bounds[0]*r + self.map.info.origin.position.x),
+                (lower_bounds[1]*r + self.map.info.origin.position.y, upper_bounds[1]*r + self.map.info.origin.position.y))
 
     def get_closest_obstacle_distance(self, x, y):
         """ Compute the closest obstacle to the specified (x,y) coordinate in
@@ -97,12 +100,40 @@ class OccupancyField(object):
             return distances
         else:
             return self.closest_occ[x_coord, y_coord] if is_valid else float('nan')
+    
+    def is_empty(self, x, y):
+        
+        x_coord = (x - self.map.info.origin.position.x)/self.map.info.resolution
+        y_coord = (y - self.map.info.origin.position.y)/self.map.info.resolution
+
+        if type(x) is np.ndarray:
+            x_coord = x_coord.astype(np.int)
+            y_coord = y_coord.astype(np.int)
+        else:
+            x_coord = int(x_coord)
+            y_coord = int(y_coord)
+        
+        ind = x_coord + y_coord*self.map.info.width
+        if ind > (self.size) or ind < 0:
+            return 0
+        if self.map.data[ind] != 0:
+            return 0
+        else:
+            return 1
 
 if __name__ == '__main__':
     occ = OccupancyField()
     X = 10*np.random.randn(100,2)
     # append a point that is likely outside the map
     X = np.vstack((X,[100, 50]))
-    print(occ.get_closest_obstacle_distance(X[:,0], X[:,1]))
-    print(occ.get_closest_obstacle_distance(50, 50))
-    print(occ.get_closest_obstacle_distance(2, 1))
+    
+    
+    i = 0
+    while i < 100:
+        x = random.uniform(-1.0, 15.0)
+        y = random.uniform(-1.0, 15.0)
+        if occ.is_empty(x, y) == 1:
+            i+=1
+    #print(occ.get_closest_obstacle_distance(X[:,0], X[:,1]))
+    #print(occ.get_closest_obstacle_distance(50, 50))
+    #print(occ.get_closest_obstacle_distance(2, 1))
