@@ -30,7 +30,7 @@ lower = 0
 upper = 10
 
 # Number of particles
-M = 500
+M = 1000
 
 # Weights
 weights = np.empty([M,1])
@@ -47,11 +47,11 @@ radius_var = 8
 # action[1] : Rotation
 actions = np.empty([2,1])
 actions = np.array([(1,-90),(1,0),(1,0),(1,0),(1,0),(1,0), (1,0), (1,0),(1,0),(1,0), (1,0),(1,0),(1,0),
+                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
+                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
+                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
+                    (1,90),(1,0),(1,0),(1,0),(1,0), (1,0),(1,0),(1,0),
                     (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,180),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0), (1,0),(1,0),
-                    (1,-90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,180),(1,0),(1,0), (1,0),(1,0), (1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,90),(1,0),(1,0), (1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
                     (1,180),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0), (1,0),(1,0), (1,0),(1,0),(1,0),(0,0),(1,0),
                     (1,-90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
                     (1,180),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0), (1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
@@ -220,10 +220,10 @@ def validate_loc(loc):
 def create_particles(M):
     
     particles = np.empty([M, 3])
-    particles[0:int(M/2), 0] = uniform(0, 3, size = int(M/2))
-    particles[0:int(M/2), 1] = uniform(0, 15, size = int(M/2))
-    particles[int(M/2):M, 0] = uniform(0, 10, size = int(M/2))
-    particles[int(M/2):M, 1] = uniform(0, 10, size = int(M/2))
+    particles[0:int(M/10), 0] = uniform(0, 3, size = int(M/10))
+    particles[0:int(M/10), 1] = uniform(10, 15, size = int(M/10))
+    particles[int(M/10):M, 0] = uniform(0, 10, size = int((9*M)/10))
+    particles[int(M/10):M, 1] = uniform(0, 10, size = int((9*M)/10))
     particles[:, 2] = uniform(0, 2*pi, size = M)
     
     return particles
@@ -294,7 +294,7 @@ def laser_model(loc):
 # normal_distribution():
 def normal_dist(x , mean , sd):
 
-    prob = ( 1 / (sd*sqrt(2*pi)) ) * exp(-0.5* pow(1/sd,2) * pow( x - mean, 2))
+    prob = exp(-0.5* pow(1/sd,2) * pow( x - mean, 2)) / (sd*sqrt(2*pi))  
 
     return prob
 
@@ -333,58 +333,48 @@ def update(w, measurments, particles, resampling_flag):
     w[i] = w[i] + 1
     """
 
+    
     #The weights are the product of the likelihoods of the measurments  
-    '''
     for i in range (M):
 
-        sd = sum = 0
-        
-        for j in range (len(measurments)):
-            sum = sum + pow(measurments[j] - distances[j][i],2)
-            
-        sd = sqrt(sum) / N_measures
-
         for j in range (N_measures):
-                w[i] = w[i]* normal_dist(measurments[j], distances[j][i], sd) 
-        
+                w[i] = w[i]* normal_dist(measurments[j], distances[j][i], sd) * 1000
+
         if ( resampling_flag == 0):
             w[i] = w[i] * prev_weights[i]
 
-        w[i] = w[i] + 1
+        w[i] += 1
     
-    '''
 
+    '''
     #The weights are the product of the likelihoods of the measurments  
     for i in range (M):
 
         for j in range (len(measurments)):
-                w[i] += exp(-0.5* pow(1/sd,2) * pow( measurments[j] - distances[j][i], 2)) 
+                w[i] += exp( -0.5*pow(1/sd,2)*pow( measurments[j] - distances[j][i], 2)) 
         
         if (resampling_flag == 0):
             w[i] += prev_weights[i]
+    '''
+
+    w = w / w.sum() #Normalise
     
-
-
-    w = w / w.sum() #Normalizar
-
     #If all the weigths are the same do not resample
     if np.all(w == w[0]):
         resampling_flag = 0
-
         
     #print(w)
 
-    """
     # Plot Weights
     plt.close()
     plt.title('Weights')
-    plt.plot(weights, c = '#d62728' )
+    for i in range(M):
+        plt.plot( (i,i), (0,w[i]), c = '#d62728' )
     plt.xlabel("Number of particles")
     plt.ylabel("weights")
-    plt.legend(loc='upper left')
     plt.show()
     plt.close()
-    """
+    
 
     return w
 
@@ -412,9 +402,9 @@ def plot(label):
     x = particles[:,0]
     y = particles[:,1]
     xy = np.vstack([x,y])
-    z = gaussian_kde(xy)(xy)
-    idx = z.argsort() # Sort the points by density, so that the densest points are plotted last
-    x, y, z = x[idx], y[idx], z[idx]
+    #z = gaussian_kde(xy)(xy)
+    #idx = z.argsort() # Sort the points by density, so that the densest points are plotted last
+    #x, y, z = x[idx], y[idx], z[idx]
 
     plt.title(label)
 
@@ -424,7 +414,7 @@ def plot(label):
         plt.plot((map[i][0][0],map[i][1][0]),(map[i][0][1],map[i,1,1]), c = 'black')
     
     # Plot Particles
-    plt.scatter(x, y, c=z, s=5, label = "particles")
+    plt.scatter(x, y, s=5, label = "particles")
 
     # Plot robot
     plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = '#d62728' , s=80, label = "Real position", edgecolors='black')
@@ -444,7 +434,7 @@ def plot(label):
 
 
 
-"""  ************************************ main()  ******************************************** """
+""" main() """
 
 
 # loc: Localization of the robot
@@ -456,16 +446,15 @@ for i in range (M):
     particles[i] = validate_loc(particles[i])
 
 #Activationg interactive mode
-plt.ion()
+#plt.ion()
 
 #Start simulation
 print("Simulation has started!")
 k = 0
 errors.fill(1.)
+resampling_flag = 1
 
 while(1):
-
-    n_eff_inverse = 0
 
     # Plotting
     plot('Map after Resampling')
@@ -492,15 +481,18 @@ while(1):
             particles[i] = validate_loc(particles[i])
         
         # UPDATE
+        print("Resampling flag=", resampling_flag)
         weights = update(weights, robot_measures, particles, resampling_flag)
         
         # n_eff
-        for n in range (M):
-            n_eff_inverse += pow(weights[n],2)
+        n_eff_inverse = 0
+
+        for m in range (M):
+            n_eff_inverse = n_eff_inverse + pow(weights[m],2)
         
         n_eff = 1/n_eff_inverse
 
-        if ( (n_eff < M*(4/5)) or k < 10):
+        if ( n_eff < M/2 or k == 0):
             resampling_flag = 1
         else:
             resampling_flag = 0
