@@ -30,33 +30,28 @@ lower = 0
 upper = 10
 
 # Number of particles
-M = 1000
+M = 800
 
 # Weights
 weights = np.empty([M,1])
 weights.fill(0.)
 
 # Number of measures of the laser model
-N_measures = 30
+N_measures = 20
 
 # Angle of the laser variation
-radius_var = 8
+radius_var = 12
 
 # Actions
 # action[0] : Distance traveled
 # action[1] : Rotation
 actions = np.empty([2,1])
-actions = np.array([(1,-90),(1,0),(1,0),(1,0),(1,0),(1,0), (1,0), (1,0),(1,0),(1,0), (1,0),(1,0),(1,0),
+actions = np.array([(1,-90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
                     (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,90),(1,0),(1,0),(1,0),(1,0), (1,0),(1,0),(1,0),
-                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,180),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0), (1,0),(1,0), (1,0),(1,0),(1,0),(0,0),(1,0),
-                    (1,-90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,180),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0), (1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,90),(1,0), (1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,180),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0), (1,0),(1,0), (1,0),(1,0),(1,0),(1,0)])
+                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
+                    (1,90),(1,0),(1,0),(1,0),
+                    (1,90),(1,0),(1,0),
+                    (1,-90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0)])
 
 
 # Last Iteration
@@ -183,7 +178,7 @@ def odometry_model(prev_loc, deltaD, rotation, particle_flag):
 
 def validate_pos(loc):
 
-    if loc[0] < lower - 0.1 or loc[0] > upper +0.1 or loc[1] < lower -0.1 or loc[1] > 15 +0.1:
+    if loc[0] < lower - 0.1 or loc[0] > upper + 0.1 or loc[1] < lower - 0.1 or loc[1] > 15 + 0.1:
         return 0
     else:
         return 1
@@ -242,26 +237,39 @@ def predict(particles, actions):
 # Laser Model
 def laser_model(loc):
 
+    # The measures are the intersections between the laser rays and the walls
     measures = np.empty([N_measures,1])
     measures.fill(0.)
-    reach = 5.6
+
+  
     x1 = loc[0][0]
     y1 = loc[1][0]
     teta = loc[2][0]
+
+    # Laser
+    reach = 5.6
     radius = -120 #Variação de ângulo do laser
+    
+    # Variable that determines which wall the laser intersected
+    # An laser ray only can intersect one wall
     right_wall = 0
 
     for i in range(N_measures):
 
         prev_err = 100000
-        ray = np.array([(x1,y1), (x1+reach*cos(teta + radians(radius)), y1+reach*sin(teta + radians(radius))) ]) #creating line segment
-        #if loc[0] == robot_loc[0] and loc[1] == robot_loc[1] and loc[2] == robot_loc[2]  :
-           #plt.plot((x1,reach*cos(teta + radians(radius))+x1),(y1,reach*sin(teta + radians(radius))+y1) , c = '#17becf')
         
-        #Intersect
+        #Creating line segment
+        ray = np.array([(x1,y1), (x1+reach*cos(teta + radians(radius)), y1+reach*sin(teta + radians(radius))) ]) 
+        '''
+        if loc[0] == robot_loc[0] and loc[1] == robot_loc[1] and loc[2] == robot_loc[2]  :
+           plt.plot((x1,reach*cos(teta + radians(radius))+x1),(y1,reach*sin(teta + radians(radius))+y1) , c = '#17becf')
+        '''
+
+        #Intersect Between the laser ray an a wall
         for j in range(n_walls):
             intersect = np.array(line_intersection(map[j], ray))
 
+            # The right wall is the one that is closest to the point
             if (intersect.shape == (2,) and validate_pos(intersect) == 1):
 
                 avg_pnt = ((map[j][0][0]+map[j][1][0])/2,(map[j][0][1]+map[j][1][1])/2) 
@@ -275,14 +283,16 @@ def laser_model(loc):
 
         if (intersect.shape == (2,) and validate_pos(intersect) == 1):
 
-            x2 = intersect[0] + np.random.normal(loc=0.0, scale=0.045, size=None) #Adding noise two the measures
+            #Adding noise two the measures
+            x2 = intersect[0] + np.random.normal(loc=0.0, scale=0.045, size=None) 
             y2 = intersect[1] + np.random.normal(loc=0.0, scale=0.045, size=None)
 
+            # The measure is the distance between the position of the robot and the intersection
+            # of the ray and the wall
             measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) )
-
             if loc[0] == robot_loc[0] and loc[1] == robot_loc[1] and loc[2] == robot_loc[2]  :
-                plt.scatter(x2, y2, c = '#e377c2')         
-                   
+                axis[0].scatter(x2, y2, c = '#e377c2')         
+             
 
         radius += radius_var
         
@@ -294,13 +304,12 @@ def laser_model(loc):
 # normal_distribution():
 def normal_dist(x , mean , sd):
 
-    prob = exp(-0.5* pow(1/sd,2) * pow( x - mean, 2)) / (sd*sqrt(2*pi))  
+    prob = exp( - pow( x - mean, 2)/(2*pow(sd,2)) ) / (sd*sqrt(2*pi))  
 
     return prob
 
 # UPDATE
 def update(w, measurments, particles, resampling_flag):
-
 
     # Distance from each particle to each landmark
     # We have N_measures measures and M particles
@@ -311,71 +320,35 @@ def update(w, measurments, particles, resampling_flag):
         w = np.empty([M,1])
         w.fill(1.)
     elif resampling_flag == 0:
-        print('298: NO RESAMPLING')
         prev_weights = w
 
-    sd = 0.3 #Standard deviation
+    sd = 2.5 #Standard deviation
 
     for i in range (M):
         distances[:,i] = laser_model(particles[i].reshape((3,1))).reshape((N_measures,)) 
 
-    """
-    #The weights are the product of the likelihoods of the measurments  
-    for i in range (M):
-
-        for j in range (len(measurments)):
-            if resampling_flag == 1:
-                w[i] = w[i] + exp(-0.5* pow(1/sd,2) * pow( measurments[j] - distances[j][i], 2)) 
-            elif resampling_flag == 0:
-                print('No resampling')
-                w[i] = w[i] + exp(-0.5* pow(1/sd,2) * pow( measurments[j] - distances[j][i], 2)) + prev_weights[i]
-                
-    w[i] = w[i] + 1
-    """
-
-    
     #The weights are the product of the likelihoods of the measurments  
     for i in range (M):
 
         for j in range (N_measures):
-                w[i] = w[i]* normal_dist(measurments[j], distances[j][i], sd) * 1000
+                w[i] = w[i]* normal_dist(measurments[j], distances[j][i], sd) 
 
         if ( resampling_flag == 0):
             w[i] = w[i] * prev_weights[i]
 
-        w[i] += 1
-    
-
-    '''
-    #The weights are the product of the likelihoods of the measurments  
-    for i in range (M):
-
-        for j in range (len(measurments)):
-                w[i] += exp( -0.5*pow(1/sd,2)*pow( measurments[j] - distances[j][i], 2)) 
-        
-        if (resampling_flag == 0):
-            w[i] += prev_weights[i]
-    '''
 
     w = w / w.sum() #Normalise
     
     #If all the weigths are the same do not resample
     if np.all(w == w[0]):
         resampling_flag = 0
-        
-    #print(w)
-
-    # Plot Weights
-    plt.close()
-    plt.title('Weights')
-    for i in range(M):
-        plt.plot( (i,i), (0,w[i]), c = '#d62728' )
-    plt.xlabel("Number of particles")
-    plt.ylabel("weights")
-    plt.show()
-    plt.close()
     
+    # Plot Weights
+    for i in range(M):
+        axis[1].plot( (i,i), (0,w[i]), c = '#d62728' )
 
+
+    
     return w
 
 # RESAMPLING
@@ -398,34 +371,33 @@ def systematic_resample(weights):
 # Plot the simulation
 def plot(label):
 
+
+
     # Calculate the point density of the particles
     x = particles[:,0]
     y = particles[:,1]
     xy = np.vstack([x,y])
-    #z = gaussian_kde(xy)(xy)
-    #idx = z.argsort() # Sort the points by density, so that the densest points are plotted last
-    #x, y, z = x[idx], y[idx], z[idx]
-
-    plt.title(label)
-
+    z = gaussian_kde(xy)(xy)
+    idx = z.argsort() # Sort the points by density, so that the densest points are plotted last
+    x, y, z = x[idx], y[idx], z[idx]
 
     # Plot Map
     for i in range(n_walls):
-        plt.plot((map[i][0][0],map[i][1][0]),(map[i][0][1],map[i,1,1]), c = 'black')
+        axis[0].plot((map[i][0][0],map[i][1][0]),(map[i][0][1],map[i,1,1]), c = 'black')
     
     # Plot Particles
-    plt.scatter(x, y, s=5, label = "particles")
+    axis[0].scatter(x, y, c = z, s=10, label = "particles")
 
     # Plot robot
-    plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = '#d62728' , s=80, label = "Real position", edgecolors='black')
-    plt.plot((robot_loc[0],(1/10)*cos(robot_loc[2])+robot_loc[0]),(robot_loc[1],(1/10)*sin(robot_loc[2])+robot_loc[1]), c = '#17becf')
+    axis[0].scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = '#d62728' , s=100, label = "Real position", edgecolors='black')
+    axis[0].plot((robot_loc[0],(1/10)*cos(robot_loc[2])+robot_loc[0]),(robot_loc[1],(1/10)*sin(robot_loc[2])+robot_loc[1]), c = '#17becf')
 
-    plt.xlabel("x")
-    plt.ylabel("y")
-    plt.legend(loc='upper right')
+
     plt.pause(0.01)
     plt.show()
-    plt.clf()
+    axis[0].axes.clear()
+    axis[1].axes.clear()
+  
 
     return
 
@@ -446,7 +418,8 @@ for i in range (M):
     particles[i] = validate_loc(particles[i])
 
 #Activationg interactive mode
-#plt.ion()
+fig, axis = plt.subplots(1,2,figsize=(15,5))
+plt.ion()
 
 #Start simulation
 print("Simulation has started!")
@@ -457,7 +430,8 @@ resampling_flag = 1
 while(1):
 
     # Plotting
-    plot('Map after Resampling')
+    plot('Particle Filter Simulation')
+    print("Iteration nº:",k+1)
 
     # *********************** Robot simulation ******************************** #
     robot_prev_loc = robot_loc
@@ -473,8 +447,9 @@ while(1):
     # ************************** Algorithm  ********************************** #
 
     if (robot_prev_loc[0][0] == robot_loc[0][0] and robot_prev_loc[1][0] == robot_loc[1][0] and robot_prev_loc[2][0] == robot_loc[2][0]):
-        print('DO NOTHING')
+        print('Robot did not move')
     else:
+
         # PREDICT
         particles = predict(particles, actions[k])
         for i in range (M):
@@ -492,7 +467,7 @@ while(1):
         
         n_eff = 1/n_eff_inverse
 
-        if ( n_eff < M/2 or k == 0):
+        if ( n_eff < M/2 ):
             resampling_flag = 1
         else:
             resampling_flag = 0
@@ -510,11 +485,11 @@ while(1):
         
 
     #Output
-    print("Iteration nº:",k+1)
     print('Real Localization:', robot_loc[0][0],robot_loc[1][0],robot_loc[2][0]*(180/pi))
 
     # Centroid of the cluster of particles
     print("Predicted Localization:", np.average(particles[:,0]), np.average(particles[:,1]), np.average(particles[:,2]*(180/pi)))
+   
     errors[k][0] = abs(np.average(particles[:,0])-robot_loc[0][0])
     errors[k][1] = abs(np.average(particles[:,1])-robot_loc[1][0])
     if ( robot_loc[2][0] < 0):
@@ -523,6 +498,7 @@ while(1):
         if (particles[i][2] < 0):
              particles[i][2] = particles[i][2] + 2*pi
     errors[k][2] = abs(np.average(particles[:,2])-robot_loc[2][0])
+
     print("Error:",errors[k][0], errors[k][1], degrees(errors[k][2]))
 
     if ( ((errors[k][0] < 0.005) and (errors[k][1] < 0.005) and (errors[k][2] < 0.005)) or k == last_iteration-1):
