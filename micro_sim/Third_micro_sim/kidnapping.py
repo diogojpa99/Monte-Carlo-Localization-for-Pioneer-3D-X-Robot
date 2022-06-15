@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from numpy.random import uniform
 from math import cos, sin, sqrt, exp, pi, radians, degrees
 from scipy.stats import gaussian_kde
+from scipy import integrate
 
 """ ************************************* Global Variables ****************************************  """
 
@@ -52,10 +53,7 @@ actions = np.array([(1,-90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0
                     (0,0),(1,-90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
                     (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
                     (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,90),(1,0),(1,0),
-                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,-90),(1,0),(1,0),
-                    (1,-90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0)])
+                    (1,90),(1,0),(1,0)])
 
 
 # Last Iteration
@@ -221,8 +219,8 @@ def create_particles(M):
     particles = np.empty([M, 3])
     particles[0:int(M/6), 0] = uniform(0, 3, size = int(M/6))
     particles[0:int(M/6), 1] = uniform(10, 15, size = int(M/6))
-    particles[int(M/6):M-1, 0] = uniform(0, 10, size = int((5*M)/6))
-    particles[int(M/6):M-1, 1] = uniform(0, 10, size = int((5*M)/6))
+    particles[int(M/6):M, 0] = uniform(0, 10, size = int((5*M)/6)+1)
+    particles[int(M/6):M, 1] = uniform(0, 10, size = int((5*M)/6)+1)
     particles[:, 2] = uniform(0, 2*pi, size = M)
     
     return particles
@@ -288,8 +286,8 @@ def laser_model(loc):
         if (intersect.shape == (2,) and validate_pos(intersect) == 1):
 
             #Adding noise two the measures
-            x2 = intersect[0] + np.random.normal(loc=0.0, scale=0.045, size=None) 
-            y2 = intersect[1] + np.random.normal(loc=0.0, scale=0.045, size=None)
+            x2 = intersect[0] + np.random.normal(loc=0.0, scale=0.05, size=None) 
+            y2 = intersect[1] + np.random.normal(loc=0.0, scale=0.05, size=None)
 
             # The measure is the distance between the position of the robot and the intersection
             # of the ray and the wall
@@ -308,7 +306,7 @@ def laser_model(loc):
 # normal_distribution():
 def normal_dist(x , mean , sd):
 
-    prob = exp( - pow( x - mean, 2)/(2*pow(sd,2)) ) / (sd*sqrt(2*pi))  
+    prob = exp( - pow( x - mean, 2) / (2*pow(sd,2)) ) / (sd*sqrt(2*pi))  
 
     return prob
 
@@ -326,8 +324,10 @@ def update(w, measurments, particles, resampling_flag):
     elif resampling_flag == 0:
         prev_weights = w
 
-    sd = 5 #Standard deviation
+    #Standard deviation
+    sd = 2.5 
 
+    # COmpute the measures for each particle
     for i in range (M):
         distances[:,i] = laser_model(particles[i].reshape((3,1))).reshape((N_measures,)) 
 
@@ -335,29 +335,38 @@ def update(w, measurments, particles, resampling_flag):
     for i in range (M):
 
         for j in range (N_measures):
-                w[i] = w[i]* normal_dist(measurments[j], distances[j][i], sd) 
+                w[i] *= normal_dist(measurments[j], distances[j][i], sd)
+
+        w[i] *= pow(10,15) 
 
         if ( resampling_flag == 0):
             w[i] = w[i] * prev_weights[i]
+        
+    # Likelihood average for kidnapping      
+    likelihood_avg = np.average(w)
+    print("Likelihood Avg:", likelihood_avg)
+    if(likelihood_avg < pow(10,-12)):
+        particles[0:int(M*(3/4))-1] = create_particles(int(M*(3/4))-1)
+        for i in range (M):
+            particles[i] = validate_loc(particles[i])
 
-
-    w = w / w.sum() #Normalise
+    #Normalise
+    w = w / w.sum() 
     
     #If all the weigths are the same do not resample
     if np.all(w == w[0]):
         resampling_flag = 0
 
-    likelihood_avg = np.average(w)
-    print("Likelihood Avg:", likelihood_avg)
-    
     # Plot Weights
     for i in range(M):
         axis[1].plot( (i,i), (0,w[i]), c = '#d62728' )
+        axis[1].set_xlabel('Particles')
+        axis[1].set_title('Weights')
 
     return w
 
 # RESAMPLING
-def systematic_resample(weights):
+def low_variance_resample(weights):
     N = len(weights)
     positions = (np.arange(N) + np.random.random()) / N
  
@@ -375,8 +384,6 @@ def systematic_resample(weights):
 
 # Plot the simulation
 def plot(label):
-
-
 
     # Calculate the point density of the particles
     x = particles[:,0]
@@ -396,8 +403,9 @@ def plot(label):
     # Plot robot
     axis[0].scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = '#d62728' , s=100, label = "Real position", edgecolors='black')
     axis[0].plot((robot_loc[0],(1/10)*cos(robot_loc[2])+robot_loc[0]),(robot_loc[1],(1/10)*sin(robot_loc[2])+robot_loc[1]), c = '#17becf')
-
-
+    axis[0].set_xlabel('x')
+    axis[0].set_ylabel('y')
+    axis[0].set_title(label)
     plt.pause(0.01)
     plt.show()
     axis[0].axes.clear()
@@ -436,9 +444,10 @@ while(1):
 
     # Plotting
     plot('Particle Filter Simulation')
-    print("Iteration nº:",k+1)
+    print("\tIteration nº:",k+1)
 
     # *********************** Robot simulation ******************************** #
+
     robot_prev_loc = robot_loc
 
     # Update localization of the robot
@@ -454,6 +463,7 @@ while(1):
     
     # Retrieving data from the laser
     robot_measures = laser_model(robot_loc)
+
 
     # ************************** Algorithm  ********************************** #
 
@@ -484,18 +494,18 @@ while(1):
         
         # RESAMPLING
         if (resampling_flag == 1):
-            print('RESAMPLE -> n_eff = ',n_eff)
-            indexes = systematic_resample(weights)
+            indexes = low_variance_resample(weights)
             particles[:] = particles[indexes]
             weights[:] = weights[indexes]
             weights /= np.sum(weights)
         else:
-            print('NO RESAMPLE, n_eff=',n_eff)
+            print('NO RESAMPLE')
 
         
 
-    #Output
-    print('Output:')
+    # ************************** Output ********************************** #
+    
+    print('\tOutput')
     print('Real Localization:', robot_loc[0][0],robot_loc[1][0],robot_loc[2][0]*(180/pi))
 
     # Centroid of the cluster of particles
@@ -510,7 +520,7 @@ while(1):
              particles[i][2] = particles[i][2] + 2*pi
     errors[k][2] = abs(np.average(particles[:,2])-robot_loc[2][0])
 
-    print("Error:",errors[k][0], errors[k][1], degrees(errors[k][2]))
+    print("ERROR:",errors[k][0], errors[k][1], degrees(errors[k][2]))
 
     if ( ((errors[k][0] < 0.005) and (errors[k][1] < 0.005) and (errors[k][2] < 0.005)) or k == last_iteration-1):
         break
@@ -518,8 +528,6 @@ while(1):
     k +=1
 
 
-    
-    
 
 # Plot errors
 x_error =  errors[:,0]
