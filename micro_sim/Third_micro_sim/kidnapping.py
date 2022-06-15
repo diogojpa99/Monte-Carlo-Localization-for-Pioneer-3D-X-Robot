@@ -48,8 +48,8 @@ radius_var = 12
 actions = np.empty([2,1])
 actions = np.array([(1,-90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
                     (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,180),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
+                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(0,0),
+                    (0,0),(1,-90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
                     (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
                     (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
                     (1,90),(1,0),(1,0),
@@ -219,10 +219,10 @@ def validate_loc(loc):
 def create_particles(M):
     
     particles = np.empty([M, 3])
-    particles[0:int(M/8), 0] = uniform(0, 3, size = int(M/8))
-    particles[0:int(M/8), 1] = uniform(10, 15, size = int(M/8))
-    particles[int(M/8):M, 0] = uniform(0, 10, size = int((7*M)/8))
-    particles[int(M/8):M, 1] = uniform(0, 10, size = int((7*M)/8))
+    particles[0:int(M/6), 0] = uniform(0, 3, size = int(M/6))
+    particles[0:int(M/6), 1] = uniform(10, 15, size = int(M/6))
+    particles[int(M/6):M-1, 0] = uniform(0, 10, size = int((5*M)/6))
+    particles[int(M/6):M-1, 1] = uniform(0, 10, size = int((5*M)/6))
     particles[:, 2] = uniform(0, 2*pi, size = M)
     
     return particles
@@ -326,7 +326,7 @@ def update(w, measurments, particles, resampling_flag):
     elif resampling_flag == 0:
         prev_weights = w
 
-    sd = 7.5 #Standard deviation
+    sd = 5 #Standard deviation
 
     for i in range (M):
         distances[:,i] = laser_model(particles[i].reshape((3,1))).reshape((N_measures,)) 
@@ -450,7 +450,7 @@ while(1):
     if( k == 27 ):
         robot_loc[0] = 1
         robot_loc[1] = 14
-        robot_loc[2] = -90
+        robot_loc[2] = 0
     
     # Retrieving data from the laser
     robot_measures = laser_model(robot_loc)
