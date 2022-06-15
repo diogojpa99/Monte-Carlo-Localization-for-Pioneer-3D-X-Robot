@@ -29,6 +29,8 @@ x_coordinate_col = []
 y_coordinate_col = []
 z_rotation_col = []
 w_rotation_col = []
+cb_signal = False
+
 def callback1(data):
     
     x_coordinate_col.append(data.pose.pose.position.x)
@@ -77,22 +79,35 @@ def callback3(data):
 def listener_1():
     rospy.init_node('listener_new1', anonymous=True)
     rospy.Subscriber("pose", Odometry, callback1)
+    run()
     #rospy.spin()
 
 def listener_2():
     rospy.init_node('listener_new2', anonymous=True)
     rospy.Subscriber("scan", LaserScan, callback2)
     #rospy.spin()
+
 def listener_3():
     #rospy.init_node('listener_new3', anonymous=True)
     rospy.Subscriber("scan", LaserScan, callback3)
     #rospy.spin()
 
+def some_other_method():
+    print("other method")
+
+def run():
+    while not rospy.is_shutdown():
+        #Do some other work
+        if cb_signal == True:
+            some_other_method()
+        rospy.Rate.sleep(10) #10Hz
+
 if __name__ == '__main__':
+    
     listener_1()
     #listener_2()
     #listener_3()
-    rospy.spin()
+    
     col1 = "pose_X"
     col2 = "pose_Y"
     col3 = "rotation_Z"
