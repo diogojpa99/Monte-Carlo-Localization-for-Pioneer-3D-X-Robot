@@ -310,7 +310,7 @@ def normal_dist(x , mean , sd):
     return prob
 
 # UPDATE
-def update(w, measurments, particles, resampling_flag):
+def update(w, measurments, particles, resampling_flag, likelihood_avg):
 
     # Distance from each particle to each landmark
     # We have N_measures measures and M particles
@@ -341,10 +341,11 @@ def update(w, measurments, particles, resampling_flag):
         if ( resampling_flag == 0):
             w[i] = w[i] * prev_weights[i]
         
-    # Likelihood average for kidnapping      
+    # Likelihood average for kidnapping     
+    prev_likelihood_avg = likelihood_avg
     likelihood_avg = np.average(w)
     print("Likelihood Avg:", likelihood_avg)
-    if(likelihood_avg < pow(10,-18)):
+    if(likelihood_avg < pow(10,-18) and prev_likelihood_avg < pow(10,-18)):
         particles[0:int(M*(3/4))-1] = create_particles(int(M*(3/4))-1)
         for i in range (M):
             particles[i] = validate_loc(particles[i])
@@ -356,7 +357,8 @@ def update(w, measurments, particles, resampling_flag):
     if np.all(w == w[0]):
         resampling_flag = 0
 
-    return w
+    return w,likelihood_avg
+
 
 # RESAMPLING
 def low_variance_resample(weights):
@@ -427,6 +429,7 @@ print("Simulation has started!")
 k = 0
 errors.fill(1.)
 resampling_flag = 1
+likelihood_avg = 1
 
 while(1):
 
@@ -465,7 +468,7 @@ while(1):
             particles[i] = validate_loc(particles[i])
         
         # UPDATE
-        weights = update(weights, robot_measures, particles, resampling_flag)
+        weights, likelihood_avg = update(weights, robot_measures, particles, resampling_flag, likelihood_avg)
         
         # n_eff
         n_eff_inverse = 0
