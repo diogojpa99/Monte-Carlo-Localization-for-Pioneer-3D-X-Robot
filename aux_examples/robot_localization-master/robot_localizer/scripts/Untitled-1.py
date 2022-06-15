@@ -1,5 +1,6 @@
 # !/usr/bin/env python
 
+from numpy import array
 import rospy
 from sensor_msgs.msg import LaserScan
 
@@ -8,11 +9,30 @@ from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Point
 from geometry_msgs.msg import Quaternion
 
+#class Array:
+#    def __init__(self, x, y, z, w):
+#        self.array=[x, y, z, w]
+global vetor        
+
 def callback(msg):
+    x=msg.pose.pose.position.x
+    y=msg.pose.pose.position.y
+    z=msg.pose.pose.orientation.z
+    w=msg.pose.pose.orientation.w
+    global vetor
+    vetor=[x, y, z, w]
+
     print(msg.pose.pose.position.x)
     print(msg.pose.pose.position.y)
     print(msg.pose.pose.position.z)
 
-rospy.init_node('listener_new1', anonymous=True)
-rospy.Subscriber("pose", Odometry, callback)
-rospy.spin()
+
+
+if __name__ == '__main__':
+    r = rospy.Rate(10)
+    while not rospy.is_shutdown():
+        rospy.init_node('listener_new1', anonymous=True)
+        rospy.Subscriber("pose", Odometry, callback)
+        print(vetor)
+        r.sleep()
+    
