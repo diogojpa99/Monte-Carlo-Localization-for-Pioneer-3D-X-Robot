@@ -10,6 +10,8 @@ from nav_msgs.msg import OccupancyGrid
 from nav_msgs.srv import GetMap
 from occupancy_field import OccupancyField
 
+import pandas as pd
+
 global my_data
 
 MEASURES = {
@@ -23,11 +25,16 @@ MEASURES = {
     90,
     110
 }
-
+x_coordinate_col = []
+y_coordinate_col = []
+z_rotation_col = []
+w_rotation_col = []
 def callback1(data):
-    my_data = data
     
-    rospy.loginfo("Pose %s", my_data)
+    x_coordinate_col.append(data.pose.pose.position.x)
+    y_coordinate_col.append(data.pose.pose.position.y)
+    z_rotation_col.append(data.pose.pose.orientation.z)
+    w_rotation_col.append(data.pose.pose.orientation.w)
 
 def callback2(data):
     my_data = data
@@ -86,3 +93,14 @@ if __name__ == '__main__':
     #listener_2()
     #listener_3()
     rospy.spin()
+    col1 = "pose_X"
+    col2 = "pose_Y"
+    col3 = "rotation_Z"
+    col4 = "rotation_W"
+    
+    data = pd.DataFrame({col1:x_coordinate_col, 
+                         col2:y_coordinate_col,
+                         col3:z_rotation_col,
+                         col4:w_rotation_col})
+
+    data.to_excel('Pose_info.xlsx', sheet_name="sheet1", index=False)
