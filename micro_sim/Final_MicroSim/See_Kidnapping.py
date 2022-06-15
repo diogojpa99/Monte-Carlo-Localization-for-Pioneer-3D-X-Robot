@@ -1,4 +1,4 @@
-""" *********************************** Libraries *********************************************** """
+""" *********************************** Libraries ************************************************* """
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -49,11 +49,10 @@ radius_var = 12
 actions = np.empty([2,1])
 actions = np.array([(1,-90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
                     (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(0,0),
+                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(0,0),                    
                     (0,0),(1,-90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
                     (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,90),(1,0),(1,0)])
+                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),])
 
 
 # Last Iteration
@@ -227,7 +226,7 @@ def create_particles(M):
     
 
 
-# Predict
+# PREDICT
 def predict(particles, actions):
 
     for i in range(M):
@@ -293,7 +292,7 @@ def laser_model(loc):
             # of the ray and the wall
             measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) )
             if loc[0] == robot_loc[0] and loc[1] == robot_loc[1] and loc[2] == robot_loc[2]  :
-                axis[0].scatter(x2, y2, c = '#e377c2')         
+                plt.scatter(x2, y2, c = '#e377c2')         
              
 
         radius += radius_var
@@ -325,9 +324,9 @@ def update(w, measurments, particles, resampling_flag):
         prev_weights = w
 
     #Standard deviation
-    sd = 2.5 
+    sd = 4
 
-    # COmpute the measures for each particle
+    # Compute the measures for each particle
     for i in range (M):
         distances[:,i] = laser_model(particles[i].reshape((3,1))).reshape((N_measures,)) 
 
@@ -345,7 +344,7 @@ def update(w, measurments, particles, resampling_flag):
     # Likelihood average for kidnapping      
     likelihood_avg = np.average(w)
     print("Likelihood Avg:", likelihood_avg)
-    if(likelihood_avg < pow(10,-12)):
+    if(likelihood_avg < pow(10,-18)):
         particles[0:int(M*(3/4))-1] = create_particles(int(M*(3/4))-1)
         for i in range (M):
             particles[i] = validate_loc(particles[i])
@@ -356,12 +355,6 @@ def update(w, measurments, particles, resampling_flag):
     #If all the weigths are the same do not resample
     if np.all(w == w[0]):
         resampling_flag = 0
-
-    # Plot Weights
-    for i in range(M):
-        axis[1].plot( (i,i), (0,w[i]), c = '#d62728' )
-        axis[1].set_xlabel('Particles')
-        axis[1].set_title('Weights')
 
     return w
 
@@ -395,28 +388,24 @@ def plot(label):
 
     # Plot Map
     for i in range(n_walls):
-        axis[0].plot((map[i][0][0],map[i][1][0]),(map[i][0][1],map[i,1,1]), c = 'black')
+        plt.plot((map[i][0][0],map[i][1][0]),(map[i][0][1],map[i,1,1]), c = 'black')
     
     # Plot Particles
-    axis[0].scatter(x, y, c = z, s=10, label = "particles")
+    plt.scatter(x, y, c = z, s=10, label = "particles")
 
     # Plot robot
-    axis[0].scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = '#d62728' , s=100, label = "Real position", edgecolors='black')
-    axis[0].plot((robot_loc[0],(1/10)*cos(robot_loc[2])+robot_loc[0]),(robot_loc[1],(1/10)*sin(robot_loc[2])+robot_loc[1]), c = '#17becf')
-    axis[0].set_xlabel('x')
-    axis[0].set_ylabel('y')
-    axis[0].set_title(label)
+    plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = '#d62728' , s=100, label = "Real position", edgecolors='black')
+    plt.plot((robot_loc[0],(1/10)*cos(robot_loc[2])+robot_loc[0]),(robot_loc[1],(1/10)*sin(robot_loc[2])+robot_loc[1]), c = '#17becf')
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.legend(loc='upper right')
+    plt.title(label)
     plt.pause(0.01)
     plt.show()
-    axis[0].axes.clear()
-    axis[1].axes.clear()
+    plt.clf()
   
 
     return
-
-
-
-
 
 
 """ *********************************** main() *********************************************** """
@@ -425,16 +414,15 @@ def plot(label):
 # loc: Localization of the robot
 robot_loc = init_robot_pos()
 
-#Create particles
+# Create particles
 particles = create_particles(M)
 for i in range (M):
     particles[i] = validate_loc(particles[i])
 
-#Activationg interactive mode
-fig, axis = plt.subplots(1,2,figsize=(15,5))
+# Activationg interactive mode
 plt.ion()
 
-#Start simulation
+# Start simulation
 print("Simulation has started!")
 k = 0
 errors.fill(1.)
@@ -502,7 +490,6 @@ while(1):
             print('NO RESAMPLE')
 
         
-
     # ************************** Output ********************************** #
     
     print('\tOutput')
@@ -518,6 +505,8 @@ while(1):
     for i in range(M):
         if (particles[i][2] < 0):
              particles[i][2] = particles[i][2] + 2*pi
+        if ( particles[i][2] > pi):
+            robot_loc[2][0] = 2*pi
     errors[k][2] = abs(np.average(particles[:,2])-robot_loc[2][0])
 
     print("ERROR:",errors[k][0], errors[k][1], degrees(errors[k][2]))

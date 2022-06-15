@@ -1,4 +1,4 @@
-""" *********************************** Libraries *********************************************** """
+""" *********************************** Libraries ************************************************* """
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -49,11 +49,7 @@ radius_var = 12
 actions = np.empty([2,1])
 actions = np.array([(1,-90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
                     (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(0,0),
-                    (0,0),(1,-90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,90),(1,0),(1,0)])
+                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(0,0)])
 
 
 # Last Iteration
@@ -227,7 +223,7 @@ def create_particles(M):
     
 
 
-# Predict
+# PREDICT
 def predict(particles, actions):
 
     for i in range(M):
@@ -325,9 +321,9 @@ def update(w, measurments, particles, resampling_flag):
         prev_weights = w
 
     #Standard deviation
-    sd = 2.5 
+    sd = 4
 
-    # COmpute the measures for each particle
+    # Compute the measures for each particle
     for i in range (M):
         distances[:,i] = laser_model(particles[i].reshape((3,1))).reshape((N_measures,)) 
 
@@ -344,8 +340,7 @@ def update(w, measurments, particles, resampling_flag):
         
     # Likelihood average for kidnapping      
     likelihood_avg = np.average(w)
-    print("Likelihood Avg:", likelihood_avg)
-    if(likelihood_avg < pow(10,-12)):
+    if(likelihood_avg < pow(10,-20)):
         particles[0:int(M*(3/4))-1] = create_particles(int(M*(3/4))-1)
         for i in range (M):
             particles[i] = validate_loc(particles[i])
@@ -415,26 +410,22 @@ def plot(label):
     return
 
 
-
-
-
-
 """ *********************************** main() *********************************************** """
 
 
 # loc: Localization of the robot
 robot_loc = init_robot_pos()
 
-#Create particles
+# Create particles
 particles = create_particles(M)
 for i in range (M):
     particles[i] = validate_loc(particles[i])
 
-#Activationg interactive mode
+# Activationg interactive mode
 fig, axis = plt.subplots(1,2,figsize=(15,5))
 plt.ion()
 
-#Start simulation
+# Start simulation
 print("Simulation has started!")
 k = 0
 errors.fill(1.)
@@ -454,12 +445,6 @@ while(1):
     if (actions[k][0] != 0 or actions[k][1] != 0):
         robot_loc = odometry_model(robot_loc, actions[k][0], radians(actions[k][1]),0)
         robot_loc = validate_loc(robot_loc)
-
-    # Kidnapping
-    if( k == 27 ):
-        robot_loc[0] = 1
-        robot_loc[1] = 14
-        robot_loc[2] = 0
     
     # Retrieving data from the laser
     robot_measures = laser_model(robot_loc)
@@ -518,7 +503,11 @@ while(1):
     for i in range(M):
         if (particles[i][2] < 0):
              particles[i][2] = particles[i][2] + 2*pi
-    errors[k][2] = abs(np.average(particles[:,2])-robot_loc[2][0])
+    if ( np.average(particles[:,2]) > pi):
+        angle = 2*pi
+    else:
+        angle = robot_loc[2][0]
+    errors[k][2] = abs(np.average(particles[:,2])-angle)
 
     print("ERROR:",errors[k][0], errors[k][1], degrees(errors[k][2]))
 
