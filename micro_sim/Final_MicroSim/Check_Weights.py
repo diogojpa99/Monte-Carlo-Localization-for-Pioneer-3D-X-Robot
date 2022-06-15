@@ -227,7 +227,7 @@ def create_particles(M):
 def predict(particles, actions):
 
     for i in range(M):
-        particles[i]  = odometry_model(particles[i], actions[0], actions[1]*(pi/180),1).reshape((3,))     
+        particles[i]  = odometry_model(particles[i], actions[0], radians(actions[1]),1).reshape((3,))     
         
     return particles 
 
@@ -494,21 +494,23 @@ while(1):
     print('Real Localization:', robot_loc[0][0],robot_loc[1][0],robot_loc[2][0]*(180/pi))
 
     # Centroid of the cluster of particles
-    print("Predicted Localization:", np.average(particles[:,0]), np.average(particles[:,1]), np.average(particles[:,2]*(180/pi)))
+    print("Predicted Localization:", np.average(particles[:,0]), np.average(particles[:,1]), np.average(particles[:,2])*(180/pi))
    
     errors[k][0] = abs(np.average(particles[:,0])-robot_loc[0][0])
     errors[k][1] = abs(np.average(particles[:,1])-robot_loc[1][0])
     if ( robot_loc[2][0] < 0):
         robot_loc[2][0] = robot_loc[2][0] + 2*pi
+
     for i in range(M):
         if (particles[i][2] < 0):
              particles[i][2] = particles[i][2] + 2*pi
-    if ( np.average(particles[:,2]) > pi):
+
+    if ( np.average(particles[:,2]) > pi) and robot_loc[2][0] == 0:
         angle = 2*pi
     else:
         angle = robot_loc[2][0]
-    errors[k][2] = abs(np.average(particles[:,2])-angle)
 
+    errors[k][2] = abs(np.average(particles[:,2]) - angle)
     print("ERROR:",errors[k][0], errors[k][1], degrees(errors[k][2]))
 
     if ( ((errors[k][0] < 0.005) and (errors[k][1] < 0.005) and (errors[k][2] < 0.005)) or k == last_iteration-1):
