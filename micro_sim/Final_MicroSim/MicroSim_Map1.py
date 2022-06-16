@@ -367,6 +367,7 @@ def update(w, measurments, particles, resampling_flag, likelihood_avg):
 # RESAMPLING
 def low_variance_resample(weights):
     N = len(weights)
+    print(N)
     positions = (np.arange(N) + np.random.random()) / N
  
     indexes = np.zeros(N, 'i')
