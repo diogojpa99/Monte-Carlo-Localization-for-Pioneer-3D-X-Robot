@@ -13,6 +13,7 @@ from geometry_msgs.msg import Quaternion
 #    def __init__(self, x, y, z, w):
 #        self.array=[x, y, z, w]
 global vetor        
+list=[]
 
 def callback(msg):
     x=msg.pose.pose.position.x
@@ -21,18 +22,20 @@ def callback(msg):
     w=msg.pose.pose.orientation.w
     global vetor
     vetor=[x, y, z, w]
-
-    print(msg.pose.pose.position.x)
-    print(msg.pose.pose.position.y)
-    print(msg.pose.pose.position.z)
+    list.clear()
+    list.append(vetor)
+    #print(msg.pose.pose.position.x)
+    #print(msg.pose.pose.position.y)
+    #print(msg.pose.pose.position.z)
 
 
 
 if __name__ == '__main__':
+    rospy.init_node('listener_new1', anonymous=True)
     r = rospy.Rate(10)
     while not rospy.is_shutdown():
-        rospy.init_node('listener_new1', anonymous=True)
         rospy.Subscriber("pose", Odometry, callback)
-        print(vetor)
+        print(list)
+        #print(vetor)
         r.sleep()
     
