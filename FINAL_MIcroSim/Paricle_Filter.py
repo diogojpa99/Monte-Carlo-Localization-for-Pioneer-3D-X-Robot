@@ -4,12 +4,7 @@ import numpy as np
 from math import cos, sin, sqrt, exp, pi, radians
 
 import plots as pl
-import Map1 as map1
-if ( map1.sim_flag == 1):
-    selected_map = map1
     
-
-
 """ ************************************* Global Variables ****************************************  """
 
 ''' Robot '''
@@ -18,7 +13,7 @@ if ( map1.sim_flag == 1):
 # odom_uncertainty[0]: x
 # odom_uncertainty[1]: y
 # odom_uncertainty[2]: Rotation
-odom_uncertainty = (0.1,0.1,0.1)
+odom_uncertainty = (0.1,0.1,0.15)
 
 ''' Laser '''
 
@@ -33,7 +28,6 @@ likelihood_sd = 2.5
 
 
 """  ************************************ Functions  *********************************************** """
-
 
 # line_intersection(line1,line2):
 # Abstract: Intersection between two lines
@@ -110,7 +104,7 @@ def odometry_model(loc, deltaD, rotation, particle_flag):
         loc[1] += np.random.normal(loc=0.0, scale= odom_uncertainty[1], size=None)
         loc[2] += np.random.normal(loc=0.0, scale= odom_uncertainty[2], size=None)
 
-    if loc[2] >= (2*pi):
+    if loc[2] >= 2*pi:
         loc[2] = loc[2] - 2*pi
     
     return loc 
@@ -126,7 +120,7 @@ def predict(particles, actions, M):
 
 
 # Laser Model
-def laser_model(loc, n_walls, robot_loc):
+def laser_model(loc, n_walls, robot_loc, selected_map):
 
     # The measures are the intersections between the laser rays and the walls
     measures = np.empty([N_measures,1])
@@ -195,7 +189,7 @@ def normal_dist(x , mean , sd):
     return prob
 
 # UPDATE
-def update(w, robot_measurments, particles, resampling_flag, likelihood_avg, M, robot_loc):
+def update(w, robot_measurments, particles, resampling_flag, likelihood_avg, M, robot_loc, selected_map):
 
     # Distance from each particle to each landmark
     # We have N_measures measures and M particles
@@ -210,7 +204,7 @@ def update(w, robot_measurments, particles, resampling_flag, likelihood_avg, M, 
 
     # Compute the measures for each particle
     for i in range (M):
-        distances[:,i] = laser_model(particles[i].reshape((3,1)), selected_map.n_walls, robot_loc).reshape((N_measures,)) 
+        distances[:,i] = laser_model(particles[i].reshape((3,1)), selected_map.n_walls, robot_loc, selected_map).reshape((N_measures,))
 
     #The weights are the product of the likelihoods of the measurments  
     for i in range (M):
@@ -226,7 +220,6 @@ def update(w, robot_measurments, particles, resampling_flag, likelihood_avg, M, 
     # Likelihood average for kidnapping     
     prev_likelihood_avg = likelihood_avg
     likelihood_avg = np.average(w)
-    print("Likelihood Avg:", likelihood_avg)
     if(likelihood_avg < pow(10,-18) and prev_likelihood_avg < pow(10,-18)):
         particles[0:int(M*(3/4))-1] = selected_map.create_particles(int(M*(3/4))-1)
         for i in range (M):

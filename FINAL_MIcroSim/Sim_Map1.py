@@ -88,6 +88,11 @@ for i in range (M):
 # Activationg interactive mode
 plt.ion()
 pl.plot_simulation('Particle Filter Simulation',robot_loc, particles, map.n_walls, map.map)
+
+print('Press "1" if you want to start the simulation:')
+map_flag = float(input())
+if ( map_flag != 1):
+    exit(0)
 plt.clf()
 
 # Start simulation
@@ -98,15 +103,15 @@ k = 0
 while(1):
 
     # *********************** Robot simulation ******************************** #
-
-    print("\tIteration nº:",k+1)
+    print("-----------------------------------------------------------------------------------")
+    print("\t\t\tIteration nº:",k+1)
 
     # Update localization of the robot
     robot_loc = pf.odometry_model(robot_loc, actions[k][0], radians(actions[k][1]), 0)
     robot_loc = map.validate_loc(robot_loc)
 
     # Retrieving data from the laser
-    robot_measures = pf.laser_model(robot_loc, map.n_walls, robot_loc)
+    robot_measures = pf.laser_model(robot_loc, map.n_walls, robot_loc, map)
 
     # ************************** Algorithm  ********************************** #
 
@@ -120,7 +125,7 @@ while(1):
             particles[i] = map.validate_loc(particles[i])
         
         # UPDATE
-        w, likelihood_avg = pf.update(w, robot_measures, particles, resampling_flag, likelihood_avg, M, robot_loc)
+        w, likelihood_avg = pf.update(w, robot_measures, particles, resampling_flag, likelihood_avg, M, robot_loc, map)
         
         # n_eff
         n_eff_inverse = 0
@@ -146,26 +151,25 @@ while(1):
 
         
     # ************************** Output ********************************** #
-    
-    print('\tOutput')
-    print('Real Localization:', robot_loc[0][0],robot_loc[1][0],robot_loc[2][0]*(180/pi))
+
+    print('Real Loc:',"\t", robot_loc[0][0],"\t", robot_loc[1][0],"\t", robot_loc[2][0]*(180/pi))
 
     # Centroid of the cluster of particles
-    print("Predicted Localization:", np.average(particles[:,0]), np.average(particles[:,1]), np.average(particles[:,2])*(180/pi))
-   
+    pred_angle = np.average(particles[:,2])
+    robot_angle = robot_loc[2][0]
+    print("Pred Loc:", "\t", np.average(particles[:,0]),"\t", np.average(particles[:,1]),"\t", pred_angle*(180/pi))
     errors[k][0] = abs(np.average(particles[:,0])-robot_loc[0][0])
     errors[k][1] = abs(np.average(particles[:,1])-robot_loc[1][0])
 
-    if ( robot_loc[2][0] < 0):
-        robot_loc[2][0] = robot_loc[2][0] + 2*pi
-
-    for i in range(M):
-        if (particles[i][2] < 0):
-             particles[i][2] = particles[i][2] + 2*pi
-
-    errors[k][2] = abs(np.average(particles[:,2]) - robot_loc[2][0])
-    print("ERROR:",errors[k][0], errors[k][1], degrees(errors[k][2]))
-
+    if ( robot_angle  < 0):
+        robot_angle  = robot_angle + 2*pi
+    if ( pred_angle < 0):
+             pred_angle = pred_angle + 2*pi
+    if( pred_angle > 180 and robot_angle == 0):
+        robot_angle = robot_angle + 2*pi
+        
+    errors[k][2] = abs(np.average(pred_angle - robot_angle))
+    print("ERROR:  ","\t",errors[k][0],"\t", errors[k][1],"\t", degrees(errors[k][2]))
     if ( ((errors[k][0] < 0.005) and (errors[k][1] < 0.005) and (errors[k][2] < 0.005)) or k == last_iteration-1):
         break
 
