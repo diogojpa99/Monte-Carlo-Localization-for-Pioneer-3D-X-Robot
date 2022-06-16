@@ -10,15 +10,15 @@ from scipy import integrate
 """ ************************************* Global Variables ****************************************  """
 
 # Create Map
-map = np.array([[(3,10), (4,10)],
-                [(6,10), (9,10)],
-                [(10,9), (10,0)],
-                [(0,0), (4,0)],
-                [(6,0), (10,0)],
-                [(4,10), (5,9)],
-                [(6,10), (5,9)],
-                [(3,4), (3,15)],
-                [(3,15), (0,15)], 
+map = np.array([[(1,0), (15,0)],
+                [(15, 0), (15,4)],
+                [(15,4), (6,4)],
+                [(6,4), (5,3)],
+                [(5,3), (4,4)],
+                [(4,4), (3, 4)],
+                [(3,4), (3,12)],
+                [(3,15), (1.5,14)],
+                [(1.5,14),(0,15)],
                 [(0,15), (0,0)]] ) 
 
 
@@ -28,28 +28,28 @@ n_walls = map.shape[0]
 
 # Rectangle
 lower = 0
-upper = 10
+upper = 15
 
 # Number of particles
-M = 1000
+M = 900
 
 # Weights
 weights = np.empty([M,1])
 weights.fill(0.)
 
 # Number of measures of the laser model
-N_measures = 20
+N_measures = 24
 
 # Angle of the laser variation
-radius_var = 12
+radius_var = 10
 
 # Actions
 # action[0] : Distance traveled
 # action[1] : Rotation
 actions = np.empty([2,1])
-actions = np.array([(1,-90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(0,0)])
+actions = np.array([(1,-90),(1,0),(1,0),(1,0),(1,0),(1,0), (1,0), (1,0),(1,0),(1,0), (1,0),(1,0),(1,0),
+                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
+                    (1,180),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0)])
 
 
 # Last Iteration
@@ -191,12 +191,20 @@ def validate_loc(loc):
 
     if loc[0] < lower: loc[0] = lower
     elif loc[0] > upper: loc[0] = upper
-
     if loc[1] < lower: loc[1] = lower
+    elif loc[1] > upper: loc[1] = upper
 
-    if (loc[0] < 3) and (loc[1] > 15): loc[1] = 15
-    elif loc[1] > upper and loc[0] > 3: loc[1] = upper
+    if loc[0] > 3 and loc[1] > 4 : 
+        avg_pnt = ((3+3)/2,(3+15)/2) 
+        err1 = sqrt( pow(avg_pnt[0]-loc[0], 2) + pow( avg_pnt[1]-loc[0],2) ) 
+        avg_pnt = ((6+15)/2,(3+3)/2) 
+        err2 = sqrt( pow(avg_pnt[0]-loc[0], 2) + pow( avg_pnt[1]-loc[0],2) ) 
+        if err1 < err2 :
+            loc[0] = 3
+        else:
+            loc[1] = 4
     
+
     return loc
 
 
@@ -213,10 +221,10 @@ def validate_loc(loc):
 def create_particles(M):
     
     particles = np.empty([M, 3])
-    particles[0:int(M/6), 0] = uniform(0, 3, size = int(M/6))
-    particles[0:int(M/6), 1] = uniform(10, 15, size = int(M/6))
-    particles[int(M/6):M, 0] = uniform(0, 10, size = int((5*M)/6)+1)
-    particles[int(M/6):M, 1] = uniform(0, 10, size = int((5*M)/6)+1)
+    particles[0:int(M/2), 0] = uniform(0, 3, size = int(M/2))
+    particles[0:int(M/2), 1] = uniform(0, 15, size = int(M/2))
+    particles[int(M/2):M, 0] = uniform(3, 15, size = int(M/2))
+    particles[int(M/2):M, 1] = uniform(0, 4, size = int(M/2))
     particles[:, 2] = uniform(0, 2*pi, size = M)
     
     return particles
@@ -227,7 +235,7 @@ def create_particles(M):
 def predict(particles, actions):
 
     for i in range(M):
-        particles[i]  = odometry_model(particles[i], actions[0], radians(actions[1]),1).reshape((3,))     
+        particles[i]  = odometry_model(particles[i], actions[0], actions[1]*(pi/180),1).reshape((3,))     
         
     return particles 
 
@@ -289,7 +297,7 @@ def laser_model(loc):
             # of the ray and the wall
             measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) )
             if loc[0] == robot_loc[0] and loc[1] == robot_loc[1] and loc[2] == robot_loc[2]  :
-                axis[0].scatter(x2, y2, c = '#e377c2')         
+                plt.scatter(x2, y2, c = '#e377c2')         
              
 
         radius += radius_var
@@ -354,15 +362,12 @@ def update(w, measurments, particles, resampling_flag, likelihood_avg):
     if np.all(w == w[0]):
         resampling_flag = 0
 
-    # Plot Weights
-    for i in range(M):
-        axis[1].plot( (i,i), (0,w[i]), c = '#d62728' )
-
     return w,likelihood_avg
 
 # RESAMPLING
 def low_variance_resample(weights):
     N = len(weights)
+    print(N)
     positions = (np.arange(N) + np.random.random()) / N
  
     indexes = np.zeros(N, 'i')
@@ -390,21 +395,21 @@ def plot(label):
 
     # Plot Map
     for i in range(n_walls):
-        axis[0].plot((map[i][0][0],map[i][1][0]),(map[i][0][1],map[i,1,1]), c = 'black')
+        plt.plot((map[i][0][0],map[i][1][0]),(map[i][0][1],map[i,1,1]), c = 'black')
     
     # Plot Particles
-    axis[0].scatter(x, y, c = z, s=10, label = "particles")
+    plt.scatter(x, y, c = z, s=10, label = "particles")
 
     # Plot robot
-    axis[0].scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = '#d62728' , s=100, label = "Real position", edgecolors='black')
-    axis[0].plot((robot_loc[0],(1/10)*cos(robot_loc[2])+robot_loc[0]),(robot_loc[1],(1/10)*sin(robot_loc[2])+robot_loc[1]), c = '#17becf')
-    axis[0].set_xlabel('x')
-    axis[0].set_ylabel('y')
-    axis[0].set_title(label)
+    plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = '#d62728' , s=100, label = "Real position", edgecolors='black')
+    plt.plot((robot_loc[0],(1/10)*cos(robot_loc[2])+robot_loc[0]),(robot_loc[1],(1/10)*sin(robot_loc[2])+robot_loc[1]), c = '#17becf')
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.legend(loc='upper right')
+    plt.title(label)
     plt.pause(0.01)
     plt.show()
-    axis[0].axes.clear()
-    axis[1].axes.clear()
+    plt.clf()
   
 
     return
@@ -422,7 +427,6 @@ for i in range (M):
     particles[i] = validate_loc(particles[i])
 
 # Activationg interactive mode
-fig, axis = plt.subplots(1,2,figsize=(15,5))
 plt.ion()
 
 # Start simulation
@@ -446,7 +450,7 @@ while(1):
     if (actions[k][0] != 0 or actions[k][1] != 0):
         robot_loc = odometry_model(robot_loc, actions[k][0], radians(actions[k][1]),0)
         robot_loc = validate_loc(robot_loc)
-    
+
     # Retrieving data from the laser
     robot_measures = laser_model(robot_loc)
 
@@ -488,7 +492,6 @@ while(1):
             print('NO RESAMPLE')
 
         
-
     # ************************** Output ********************************** #
     
     print('\tOutput')
@@ -499,6 +502,7 @@ while(1):
    
     errors[k][0] = abs(np.average(particles[:,0])-robot_loc[0][0])
     errors[k][1] = abs(np.average(particles[:,1])-robot_loc[1][0])
+
     if ( robot_loc[2][0] < 0):
         robot_loc[2][0] = robot_loc[2][0] + 2*pi
 
@@ -506,12 +510,7 @@ while(1):
         if (particles[i][2] < 0):
              particles[i][2] = particles[i][2] + 2*pi
 
-    if ( np.average(particles[:,2]) > pi) and robot_loc[2][0] == 0:
-        angle = 2*pi
-    else:
-        angle = robot_loc[2][0]
-
-    errors[k][2] = abs(np.average(particles[:,2]) - angle)
+    errors[k][2] = abs(np.average(particles[:,2]) - robot_loc[2][0])
     print("ERROR:",errors[k][0], errors[k][1], degrees(errors[k][2]))
 
     if ( ((errors[k][0] < 0.005) and (errors[k][1] < 0.005) and (errors[k][2] < 0.005)) or k == last_iteration-1):

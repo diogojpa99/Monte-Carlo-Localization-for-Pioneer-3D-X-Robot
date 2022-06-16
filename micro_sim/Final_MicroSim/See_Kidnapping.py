@@ -310,7 +310,7 @@ def normal_dist(x , mean , sd):
     return prob
 
 # UPDATE
-def update(w, measurments, particles, resampling_flag):
+def update(w, measurments, particles, resampling_flag, likelihood_avg):
 
     # Distance from each particle to each landmark
     # We have N_measures measures and M particles
@@ -341,10 +341,11 @@ def update(w, measurments, particles, resampling_flag):
         if ( resampling_flag == 0):
             w[i] = w[i] * prev_weights[i]
         
-    # Likelihood average for kidnapping      
+    # Likelihood average for kidnapping     
+    prev_likelihood_avg = likelihood_avg
     likelihood_avg = np.average(w)
     print("Likelihood Avg:", likelihood_avg)
-    if(likelihood_avg < pow(10,-18)):
+    if(likelihood_avg < pow(10,-18) and prev_likelihood_avg < pow(10,-18)):
         particles[0:int(M*(3/4))-1] = create_particles(int(M*(3/4))-1)
         for i in range (M):
             particles[i] = validate_loc(particles[i])
@@ -356,7 +357,8 @@ def update(w, measurments, particles, resampling_flag):
     if np.all(w == w[0]):
         resampling_flag = 0
 
-    return w
+    return w,likelihood_avg
+
 
 # RESAMPLING
 def low_variance_resample(weights):
@@ -427,6 +429,7 @@ print("Simulation has started!")
 k = 0
 errors.fill(1.)
 resampling_flag = 1
+likelihood_avg = 1
 
 while(1):
 
@@ -465,7 +468,7 @@ while(1):
             particles[i] = validate_loc(particles[i])
         
         # UPDATE
-        weights = update(weights, robot_measures, particles, resampling_flag)
+        weights, likelihood_avg = update(weights, robot_measures, particles, resampling_flag, likelihood_avg)
         
         # n_eff
         n_eff_inverse = 0
@@ -496,19 +499,24 @@ while(1):
     print('Real Localization:', robot_loc[0][0],robot_loc[1][0],robot_loc[2][0]*(180/pi))
 
     # Centroid of the cluster of particles
-    print("Predicted Localization:", np.average(particles[:,0]), np.average(particles[:,1]), np.average(particles[:,2]*(180/pi)))
+    print("Predicted Localization:", np.average(particles[:,0]), np.average(particles[:,1]), np.average(particles[:,2])*(180/pi))
    
     errors[k][0] = abs(np.average(particles[:,0])-robot_loc[0][0])
     errors[k][1] = abs(np.average(particles[:,1])-robot_loc[1][0])
+
     if ( robot_loc[2][0] < 0):
         robot_loc[2][0] = robot_loc[2][0] + 2*pi
+
     for i in range(M):
         if (particles[i][2] < 0):
              particles[i][2] = particles[i][2] + 2*pi
-        if ( particles[i][2] > pi):
-            robot_loc[2][0] = 2*pi
-    errors[k][2] = abs(np.average(particles[:,2])-robot_loc[2][0])
 
+    if ( np.average(particles[:,2]) > pi) and robot_loc[2][0] == 0:
+        angle = 2*pi
+    else:
+        angle = robot_loc[2][0]  
+
+    errors[k][2] = abs(np.average(particles[:,2]) - angle)
     print("ERROR:",errors[k][0], errors[k][1], degrees(errors[k][2]))
 
     if ( ((errors[k][0] < 0.005) and (errors[k][1] < 0.005) and (errors[k][2] < 0.005)) or k == last_iteration-1):
