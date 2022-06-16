@@ -10,15 +10,13 @@ from scipy.stats import gaussian_kde
 
 def plot_laser(x2,y2):
 
-    plt.scatter(x2, y2, c = '#e377c2') 
-      
+    plt.scatter(x2, y2, c = '#e377c2')       
+
     return
+
 
 # Plot the simulation
 def plot_simulation(label, robot_loc, particles, n_walls, map):
-
-    # Activationg interactive mode
-    plt.ion()
 
     # Calculate the point density of the particles
     x = particles[:,0]

@@ -2,6 +2,8 @@
 
 import numpy as np
 from math import sqrt
+from numpy.random import uniform
+from math import pi
 
 
 """ ************************************* Global Variables ****************************************  """
@@ -31,6 +33,26 @@ upper = 15
 
 
 """  ************************************ Functions  ******************************************** """
+
+# create_particles():
+# Creates a set of particles distributed uniformly in the map
+# Input:
+# M: Number of particles
+# Ouput:
+# 2D Array tha contains the localization of each particle (and its rotation)
+# particles[:,0] : x position
+# particles[:,1] : y position
+# particles[:,2] : rotation
+
+def create_particles(M, particles):
+    
+    particles[0:int(M/2), 0] = uniform(0, 3, size = int(M/2))
+    particles[0:int(M/2), 1] = uniform(0, 15, size = int(M/2))
+    particles[int(M/2):M, 0] = uniform(3, 15, size = int(M/2))
+    particles[int(M/2):M, 1] = uniform(0, 4, size = int(M/2))
+    particles[:, 2] = uniform(0, 2*pi, size = M)
+    
+    return particles
 
 
 # Validate Position

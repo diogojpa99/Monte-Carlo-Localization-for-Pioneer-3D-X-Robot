@@ -7,6 +7,29 @@ import plots as pl
 import Map1 as map1
 if ( map1.sim_flag == 1):
     selected_map = map1
+    
+
+
+""" ************************************* Global Variables ****************************************  """
+
+''' Robot '''
+
+# Odometry uncertainty
+# odom_uncertainty[0]: x
+# odom_uncertainty[1]: y
+# odom_uncertainty[2]: Rotation
+odom_uncertainty = (0.1,0.1,0.1)
+
+''' Laser '''
+
+N_measures = 24 # Number of measures of the laser model
+laser_reach = 5.6
+laser_radius_var = 10 # Angle of the laser variation
+laser_uncertanty = 0.05
+
+''' Optimize the algorithm '''
+
+likelihood_sd = 2.5
 
 
 """  ************************************ Functions  *********************************************** """
@@ -74,7 +97,7 @@ def line_intersection(line1, line2):
 # rotation : Rotation between time t and time t+1
 # Output: The localization of the robot at time t+1
 
-def odometry_model(loc, deltaD, rotation, particle_flag, uncertainty):
+def odometry_model(loc, deltaD, rotation, particle_flag):
         
     # Target distribution
     loc[0] = loc[0] + deltaD*cos(loc[2]) 
@@ -83,9 +106,9 @@ def odometry_model(loc, deltaD, rotation, particle_flag, uncertainty):
     
     if (particle_flag == 1): #If it is a particle we add uncertanty
 
-        loc[0] += np.random.normal(loc=0.0, scale=uncertainty[0], size=None)
-        loc[1] += np.random.normal(loc=0.0, scale=uncertainty[1], size=None)
-        loc[2] += np.random.normal(loc=0.0, scale=uncertainty[2], size=None)
+        loc[0] += np.random.normal(loc=0.0, scale= odom_uncertainty[0], size=None)
+        loc[1] += np.random.normal(loc=0.0, scale= odom_uncertainty[1], size=None)
+        loc[2] += np.random.normal(loc=0.0, scale= odom_uncertainty[2], size=None)
 
     if loc[2] >= (2*pi):
         loc[2] = loc[2] - 2*pi
@@ -94,23 +117,27 @@ def odometry_model(loc, deltaD, rotation, particle_flag, uncertainty):
 
 
 # PREDICT
-def predict(particles, actions, M, odom_uncertainty):
+def predict(particles, actions, M):
 
     for i in range(M):
-        particles[i]  = odometry_model(particles[i], actions[0], actions[1]*(pi/180), 1, odom_uncertainty).reshape((3,))     
+        particles[i]  = odometry_model(particles[i], actions[0], actions[1]*(pi/180), 1).reshape((3,))     
         
     return particles 
 
 
 # Laser Model
-def laser_model(loc, measures, N_measures, n_walls, radius_var, robot_loc, reach, radius, laser_uncertanty):
+def laser_model(loc, n_walls, robot_loc):
 
     # The measures are the intersections between the laser rays and the walls
+    measures = np.empty([N_measures,1])
     measures.fill(0.)
 
     x1 = loc[0][0]
     y1 = loc[1][0]
     teta = loc[2][0]
+
+    # Laser radius
+    laser_radius = -120 #Variação de ângulo do laser
     
     # Variable that determines which wall the laser intersected
     # An laser ray only can intersect one wall
@@ -121,7 +148,7 @@ def laser_model(loc, measures, N_measures, n_walls, radius_var, robot_loc, reach
         prev_err = 100000
         
         #Creating line segment
-        ray = np.array([(x1,y1), (x1+reach*cos(teta + radians(radius)), y1+reach*sin(teta + radians(radius))) ]) 
+        ray = np.array([(x1,y1), (x1+laser_reach*cos(teta + radians(laser_radius)), y1+laser_reach*sin(teta + radians(laser_radius))) ]) 
         '''
         if loc[0] == robot_loc[0] and loc[1] == robot_loc[1] and loc[2] == robot_loc[2]  :
            plt.plot((x1,reach*cos(teta + radians(radius))+x1),(y1,reach*sin(teta + radians(radius))+y1) , c = '#17becf')
@@ -156,7 +183,7 @@ def laser_model(loc, measures, N_measures, n_walls, radius_var, robot_loc, reach
                 pl.plot_laser(x2,y2)      
              
 
-        radius += radius_var
+        laser_radius += laser_radius_var
         
     return measures
 
@@ -168,7 +195,7 @@ def normal_dist(x , mean , sd):
     return prob
 
 # UPDATE
-def update(w, measurments, particles, resampling_flag, likelihood_avg, N_measures, M, sd, laser_radius_var, robot_loc, laser_reach, laser_radius, laser_uncertanty):
+def update(w, robot_measurments, particles, resampling_flag, likelihood_avg, M, robot_loc):
 
     # Distance from each particle to each landmark
     # We have N_measures measures and M particles
@@ -176,22 +203,20 @@ def update(w, measurments, particles, resampling_flag, likelihood_avg, N_measure
     distances.fill(0.)
 
     if resampling_flag == 1:
+        w = np.empty([M,1])
         w.fill(1.)
     elif resampling_flag == 0:
         prev_weights = w
 
-    #Standard deviation
-    sd = 4
-
     # Compute the measures for each particle
     for i in range (M):
-        distances[:,i] = laser_model(particles[i].reshape((3,1)), measurments, N_measures, selected_map.n_walls, laser_radius_var, robot_loc, laser_reach, laser_radius, laser_uncertanty ).reshape((N_measures,)) 
+        distances[:,i] = laser_model(particles[i].reshape((3,1)), selected_map.n_walls, robot_loc).reshape((N_measures,)) 
 
     #The weights are the product of the likelihoods of the measurments  
     for i in range (M):
 
         for j in range (N_measures):
-                w[i] *= normal_dist(measurments[j], distances[j][i], sd)
+                w[i] *= normal_dist(robot_measurments[j], distances[j][i], likelihood_sd)
 
         w[i] *= pow(10,15) 
 
@@ -213,6 +238,7 @@ def update(w, measurments, particles, resampling_flag, likelihood_avg, N_measure
     #If all the weigths are the same do not resample
     if np.all(w == w[0]):
         resampling_flag = 0
+        
 
     return w,likelihood_avg
 

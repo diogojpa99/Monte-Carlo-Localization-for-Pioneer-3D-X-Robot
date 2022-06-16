@@ -2,8 +2,8 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from math import sqrt, pi, radians, degrees
-from numpy.random import uniform
+from math import pi, radians, degrees
+
 
 import plots as pl
 import Map1 as map
@@ -20,9 +20,8 @@ M = 900
 # Particles
 particles = np.empty([M, 3])
 
-''' Weights'''
+''' Weights '''
 
-# Weights
 w = np.empty([M,1])
 w.fill(1.)
 
@@ -30,22 +29,6 @@ w.fill(1.)
 
 # Robot Localization
 robot_loc = np.empty([3,1])
-
-# Odometry uncertainty
-# odom_uncertainty[0]: x
-# odom_uncertainty[1]: y
-# odom_uncertainty[2]: Rotation
-odom_uncertainty = (0.5,0.5,0.1)
-
-
-''' Laser '''
-
-N_measures = 24 # Number of measures of the laser model
-measures = np.empty([N_measures,1])
-laser_reach = 5.6
-laser_radius = -120 #Variação de ângulo do laser
-laser_radius_var = 10 # Angle of the laser variation
-laser_uncertanty = 0.05
 
 ''' Simulation '''
 
@@ -60,22 +43,18 @@ actions = np.array([(1,-90),(1,0),(1,0),(1,0),(1,0),(1,0), (1,0), (1,0),(1,0),(1
 # Last Iteration
 last_iteration = actions.shape[0]
 
-
 ''' Optimize the algorithm '''
 
-likelihood_sd = 4
+likelihood_avg = 1 #Likelihoods Average
 n_eff = M # n_eff 
 resampling_flag = 1 # Resampling Flag
-likelihood_avg = 1 #Likelihoods Average
-simulation = 0
+
 
 ''' Output '''
 
 # Errors
 errors = np.empty([last_iteration,3])
 errors.fill(1.)
-
-
 
 
 """  ************************************ Functions  ******************************************** """
@@ -94,27 +73,6 @@ def init_robot_pos(loc):
 
     return loc
 
-# create_particles():
-# Creates a set of particles distributed uniformly in the map
-# Input:
-# M: Number of particles
-# Ouput:
-# 2D Array tha contains the localization of each particle (and its rotation)
-# particles[:,0] : x position
-# particles[:,1] : y position
-# particles[:,2] : rotation
-
-def create_particles(M, particles):
-    
-    particles[0:int(M/2), 0] = uniform(0, 3, size = int(M/2))
-    particles[0:int(M/2), 1] = uniform(0, 15, size = int(M/2))
-    particles[int(M/2):M, 0] = uniform(3, 15, size = int(M/2))
-    particles[int(M/2):M, 1] = uniform(0, 4, size = int(M/2))
-    particles[:, 2] = uniform(0, 2*pi, size = M)
-    
-    return particles
-
-
 
 """ *********************************** main() *********************************************** """
 
@@ -122,12 +80,15 @@ def create_particles(M, particles):
 robot_loc = init_robot_pos(robot_loc)
 
 # Create particles
-particles = create_particles(M, particles)
+particles = map.create_particles(M, particles)
 for i in range (M):
     particles[i] = map.validate_loc(particles[i])
 
 # Plotting
+# Activationg interactive mode
+plt.ion()
 pl.plot_simulation('Particle Filter Simulation',robot_loc, particles, map.n_walls, map.map)
+plt.clf()
 
 # Start simulation
 print('The simulation as started')
@@ -141,13 +102,11 @@ while(1):
     print("\tIteration nº:",k+1)
 
     # Update localization of the robot
-
-    robot_loc = pf.odometry_model(robot_loc, actions[k][0], radians(actions[k][1]), 0, odom_uncertainty)
-    print(robot_loc)
+    robot_loc = pf.odometry_model(robot_loc, actions[k][0], radians(actions[k][1]), 0)
     robot_loc = map.validate_loc(robot_loc)
 
     # Retrieving data from the laser
-    robot_measures = pf.laser_model(robot_loc, measures, N_measures, map.n_walls, laser_radius_var, robot_loc, laser_reach, laser_radius, laser_uncertanty)
+    robot_measures = pf.laser_model(robot_loc, map.n_walls, robot_loc)
 
     # ************************** Algorithm  ********************************** #
 
@@ -156,12 +115,12 @@ while(1):
     else:
 
         # PREDICT
-        particles = pf.predict(particles, actions[k], M, odom_uncertainty)
+        particles = pf.predict(particles, actions[k], M)
         for i in range (M):
             particles[i] = map.validate_loc(particles[i])
         
         # UPDATE
-        w, likelihood_avg = pf.update(w, measures, particles, resampling_flag, likelihood_avg, N_measures, M, likelihood_sd,  laser_radius_var, robot_loc, laser_reach, laser_radius, laser_uncertanty)
+        w, likelihood_avg = pf.update(w, robot_measures, particles, resampling_flag, likelihood_avg, M, robot_loc)
         
         # n_eff
         n_eff_inverse = 0
@@ -211,9 +170,9 @@ while(1):
         break
 
     # Plotting
-    plt.clf()
     pl.plot_simulation('Particle Filter Simulation',robot_loc, particles, map.n_walls, map.map)
+    plt.clf()
 
     k +=1
 
-
+pl.plot_erros(errors)
