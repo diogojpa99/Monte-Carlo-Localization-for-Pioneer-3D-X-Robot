@@ -120,10 +120,6 @@ def create_particles(M, particles):
 
 # loc: Localization of the robot
 robot_loc = init_robot_pos(robot_loc)
-robot_prev_loc = np.empty([3,1])
-robot_prev_loc[0] = 0
-robot_prev_loc[1] = 0
-robot_prev_loc[2] = 0
 
 # Create particles
 particles = create_particles(M, particles)
@@ -145,17 +141,17 @@ while(1):
     print("\tIteration nº:",k+1)
 
     # Update localization of the robot
-    if (actions[k][0] != 0 or actions[k][1] != 0):
-        robot_loc = pf.odometry_model(robot_loc, actions[k][0], radians(actions[k][1]), 0, odom_uncertainty)
-        print(robot_loc)
-        robot_loc = map.validate_loc(robot_loc)
+
+    robot_loc = pf.odometry_model(robot_loc, actions[k][0], radians(actions[k][1]), 0, odom_uncertainty)
+    print(robot_loc)
+    robot_loc = map.validate_loc(robot_loc)
 
     # Retrieving data from the laser
     robot_measures = pf.laser_model(robot_loc, measures, N_measures, map.n_walls, laser_radius_var, robot_loc, laser_reach, laser_radius, laser_uncertanty)
 
     # ************************** Algorithm  ********************************** #
-    print(robot_prev_loc)
-    if (robot_prev_loc[0][0] == robot_loc[0][0] and robot_prev_loc[1][0] == robot_loc[1][0] and robot_prev_loc[2][0] == robot_loc[2][0]):
+
+    if (actions[k][0] == 0 and actions[k][1] == 0):
         print('ROBOT DID NOT MOVE')
     else:
 
@@ -219,8 +215,5 @@ while(1):
     pl.plot_simulation('Particle Filter Simulation',robot_loc, particles, map.n_walls, map.map)
 
     k +=1
-    robot_prev_loc = robot_loc
-    print(robot_prev_loc)
-
 
 
