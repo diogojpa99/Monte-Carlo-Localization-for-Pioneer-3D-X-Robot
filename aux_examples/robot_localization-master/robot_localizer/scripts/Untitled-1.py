@@ -14,6 +14,7 @@ from geometry_msgs.msg import Quaternion
 #        self.array=[x, y, z, w]
 global vetor        
 list=[]
+dist=[]
 
 def callback(msg):
     x=msg.pose.pose.position.x
@@ -28,6 +29,21 @@ def callback(msg):
     #print(msg.pose.pose.position.y)
     #print(msg.pose.pose.position.z)
 
+def callback2(data):
+    
+    vetor =[
+    (data.ranges[72]),
+    (data.ranges[128]),
+    (data.ranges[214]),
+    (data.ranges[299]),
+    (data.ranges[384]),
+    (data.ranges[470]),
+    (data.ranges[555]),
+    (data.ranges[640]),
+    (data.ranges[697])]
+
+    dist.clear()
+    dist.append(vetor)
 
 
 if __name__ == '__main__':
@@ -35,7 +51,8 @@ if __name__ == '__main__':
     r = rospy.Rate(10)
     while not rospy.is_shutdown():
         rospy.Subscriber("pose", Odometry, callback)
+        rospy.Subscriber("scan",LaserScan, callback2)
         print(list)
-        #print(vetor)
+        print(dist)
         r.sleep()
     
