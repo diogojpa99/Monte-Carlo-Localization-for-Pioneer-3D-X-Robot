@@ -6,7 +6,7 @@ from math import pi, radians, degrees
 
 
 import plots as pl
-import Map0 as map
+import Map2 as map
 import Paricle_Filter as pf
 
 
@@ -36,10 +36,12 @@ robot_loc = np.empty([3,1])
 # action[0] : Distance traveled
 # action[1] : Rotation
 actions = np.empty([2,1])
-actions = np.array([(1,90),(1,0),(1,0),(1,0),(1,0),
+actions = np.array([(1,-90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
                     (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0)])
+                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(0,0),                    
+                    (0,0),(1,-90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
+                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
+                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),])
 
 # Last Iteration
 last_iteration = actions.shape[0]
@@ -68,8 +70,8 @@ errors.fill(1.)
 
 def init_robot_pos(loc):
 
-    loc[0] = 7
-    loc[1] = 9
+    loc[0] = 0
+    loc[1] = 14
     loc[2] = 0
 
     return loc
@@ -110,6 +112,12 @@ while(1):
     # Update localization of the robot
     robot_loc = pf.odometry_model(robot_loc, actions[k][0], radians(actions[k][1]), 0)
     robot_loc = map.validate_loc(robot_loc)
+
+    # Kidnapping
+    if( k == 27 ):
+        robot_loc[0] = 1
+        robot_loc[1] = 14
+        robot_loc[2] = 0
 
     # Retrieving data from the laser
     robot_measures = pf.laser_model(robot_loc, map.n_walls, robot_loc, map)
@@ -162,6 +170,10 @@ while(1):
     errors[k][0] = abs(np.average(particles[:,0])-robot_loc[0][0])
     errors[k][1] = abs(np.average(particles[:,1])-robot_loc[1][0])
 
+    if ( robot_angle  < 0):
+        robot_angle  = robot_angle + 2*pi
+    if ( pred_angle < 0):
+        pred_angle = pred_angle + 2*pi
     if( pred_angle > 180 and robot_angle == 0):
         robot_angle = robot_angle + 2*pi
         

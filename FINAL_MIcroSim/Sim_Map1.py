@@ -168,7 +168,7 @@ while(1):
     if( pred_angle > 180 and robot_angle == 0):
         robot_angle = robot_angle + 2*pi
         
-    errors[k][2] = abs(np.average(pred_angle - robot_angle))
+    errors[k][2] = abs(pred_angle - robot_angle)
     print("ERROR:  ","\t",errors[k][0],"\t", errors[k][1],"\t", degrees(errors[k][2]))
     if ( ((errors[k][0] < 0.005) and (errors[k][1] < 0.005) and (errors[k][2] < 0.005)) or k == last_iteration-1):
         break

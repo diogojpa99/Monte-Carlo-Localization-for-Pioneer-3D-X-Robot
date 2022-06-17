@@ -103,9 +103,6 @@ def odometry_model(loc, deltaD, rotation, particle_flag):
         loc[0] += np.random.normal(loc=0.0, scale= odom_uncertainty[0], size=None)
         loc[1] += np.random.normal(loc=0.0, scale= odom_uncertainty[1], size=None)
         loc[2] += np.random.normal(loc=0.0, scale= odom_uncertainty[2], size=None)
-
-    if loc[2] >= 2*pi:
-        loc[2] = loc[2] - 2*pi
     
     return loc 
 
@@ -223,7 +220,7 @@ def update(w, robot_measurments, particles, resampling_flag, likelihood_avg, M, 
     print("Likelihood_avg: ",likelihood_avg)
     likelihood_avg = np.average(w)
     if(likelihood_avg < pow(10,-6) and prev_likelihood_avg < pow(10,-6)):
-        for i in range (M):
+        for i in range (int(M*(4/5))):
             particles[i] = selected_map.reposition_particle(particles[i], i)
             particles[i] = selected_map.validate_loc(particles[i])
 
