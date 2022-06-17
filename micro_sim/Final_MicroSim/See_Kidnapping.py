@@ -324,7 +324,7 @@ def update(w, measurments, particles, resampling_flag, likelihood_avg):
         prev_weights = w
 
     #Standard deviation
-    sd = 1.75
+    sd = 2.5
 
     # Compute the measures for each particle
     for i in range (M):
