@@ -134,7 +134,7 @@ while(1):
             n_eff_inverse = n_eff_inverse + pow(w[m],2)
         
         n_eff = 1/n_eff_inverse
-
+        print("[Neff] -> ", n_eff)
         if ( n_eff < M/2 ):
             resampling_flag = 1
         else:
@@ -164,7 +164,7 @@ while(1):
     if ( robot_angle  < 0):
         robot_angle  = robot_angle + 2*pi
     if ( pred_angle < 0):
-             pred_angle = pred_angle + 2*pi
+        pred_angle = pred_angle + 2*pi
     if( pred_angle > 180 and robot_angle == 0):
         robot_angle = robot_angle + 2*pi
         

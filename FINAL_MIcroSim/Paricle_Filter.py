@@ -13,7 +13,7 @@ import plots as pl
 # odom_uncertainty[0]: x
 # odom_uncertainty[1]: y
 # odom_uncertainty[2]: Rotation
-odom_uncertainty = (0.1,0.1,0.15)
+odom_uncertainty = (0.12,0.12,0.15)
 
 ''' Laser '''
 
@@ -24,7 +24,7 @@ laser_uncertanty = 0.05
 
 ''' Optimize the algorithm '''
 
-likelihood_sd = 2.5
+likelihood_sd = 1.5
 
 
 """  ************************************ Functions  *********************************************** """
@@ -212,6 +212,7 @@ def update(w, robot_measurments, particles, resampling_flag, likelihood_avg, M, 
         for j in range (N_measures):
                 w[i] *= normal_dist(robot_measurments[j], distances[j][i], likelihood_sd)
 
+        w[i] += pow(10,-300) # avoid round-off to zero 
         w[i] *= pow(10,15) 
 
         if ( resampling_flag == 0):
@@ -219,6 +220,7 @@ def update(w, robot_measurments, particles, resampling_flag, likelihood_avg, M, 
         
     # Likelihood average for kidnapping     
     prev_likelihood_avg = likelihood_avg
+    print("Likelihood_avg: ",likelihood_avg)
     likelihood_avg = np.average(w)
     if(likelihood_avg < pow(10,-18) and prev_likelihood_avg < pow(10,-18)):
         particles[0:int(M*(3/4))-1] = selected_map.create_particles(int(M*(3/4))-1)

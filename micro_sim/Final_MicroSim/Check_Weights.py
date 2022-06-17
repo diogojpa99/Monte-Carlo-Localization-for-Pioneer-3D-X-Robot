@@ -321,7 +321,7 @@ def update(w, measurments, particles, resampling_flag, likelihood_avg):
         prev_weights = w
 
     #Standard deviation
-    sd = 4
+    sd = 1.8
 
     # Compute the measures for each particle
     for i in range (M):
@@ -333,22 +333,25 @@ def update(w, measurments, particles, resampling_flag, likelihood_avg):
         for j in range (N_measures):
                 w[i] *= normal_dist(measurments[j], distances[j][i], sd)
 
+        w[i] += pow(10,-300) # avoid round-off to zero  
         w[i] *= pow(10,15) 
 
         if ( resampling_flag == 0):
             w[i] = w[i] * prev_weights[i]
+
         
     # Likelihood average for kidnapping     
     prev_likelihood_avg = likelihood_avg
     likelihood_avg = np.average(w)
     print("Likelihood Avg:", likelihood_avg)
-    if(likelihood_avg < pow(10,-18) and prev_likelihood_avg < pow(10,-18)):
+    if(likelihood_avg < pow(10,-6) and prev_likelihood_avg < pow(10,-6)):
         particles[0:int(M*(3/4))-1] = create_particles(int(M*(3/4))-1)
         for i in range (M):
             particles[i] = validate_loc(particles[i])
 
     #Normalise
     w = w / w.sum() 
+
     
     #If all the weigths are the same do not resample
     if np.all(w == w[0]):
@@ -472,6 +475,7 @@ while(1):
             n_eff_inverse = n_eff_inverse + pow(weights[m],2)
         
         n_eff = 1/n_eff_inverse
+        print("[neff] -> ", n_eff)
 
         if ( n_eff < M/2 ):
             resampling_flag = 1

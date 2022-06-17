@@ -324,7 +324,7 @@ def update(w, measurments, particles, resampling_flag, likelihood_avg):
         prev_weights = w
 
     #Standard deviation
-    sd = 4
+    sd = 1.75
 
     # Compute the measures for each particle
     for i in range (M):
@@ -336,6 +336,7 @@ def update(w, measurments, particles, resampling_flag, likelihood_avg):
         for j in range (N_measures):
                 w[i] *= normal_dist(measurments[j], distances[j][i], sd)
 
+        w[i] += pow(10,-300) # avoid round-off to zero
         w[i] *= pow(10,15) 
 
         if ( resampling_flag == 0):
