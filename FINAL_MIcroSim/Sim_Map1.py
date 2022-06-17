@@ -15,7 +15,7 @@ import Paricle_Filter as pf
 ''' Particles '''
 
 # Number of particles
-M = 900
+M = 1000
 
 # Particles
 particles = np.empty([M, 3])

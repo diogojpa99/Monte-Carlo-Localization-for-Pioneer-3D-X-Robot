@@ -31,17 +31,17 @@ lower = 0
 upper = 15
 
 # Number of particles
-M = 900
+M = 100
 
 # Weights
 weights = np.empty([M,1])
 weights.fill(0.)
 
 # Number of measures of the laser model
-N_measures = 24
+N_measures = 30
 
 # Angle of the laser variation
-radius_var = 10
+radius_var = 8
 
 # Actions
 # action[0] : Distance traveled
@@ -330,22 +330,29 @@ def update(w, measurments, particles, resampling_flag, likelihood_avg):
 
     #Standard deviation
     sd = 4
-
+    erros = np.empty([N_measures,1])
+    
     # Compute the measures for each particle
     for i in range (M):
         distances[:,i] = laser_model(particles[i].reshape((3,1))).reshape((N_measures,)) 
 
     #The weights are the product of the likelihoods of the measurments  
+    plt.close()
     for i in range (M):
 
         for j in range (N_measures):
+                erros[j] = measurments[j] - distances[j][i]
                 w[i] *= normal_dist(measurments[j], distances[j][i], sd)
 
         w[i] *= pow(10,15) 
-
+        
         if ( resampling_flag == 0):
             w[i] = w[i] * prev_weights[i]
         
+        plt.plot(erros)
+        plt.show()  
+        plt.close()
+
     # Likelihood average for kidnapping     
     prev_likelihood_avg = likelihood_avg
     likelihood_avg = np.average(w)
@@ -427,7 +434,7 @@ for i in range (M):
     particles[i] = validate_loc(particles[i])
 
 # Activationg interactive mode
-plt.ion()
+#plt.ion()
 
 # Start simulation
 print("Simulation has started!")

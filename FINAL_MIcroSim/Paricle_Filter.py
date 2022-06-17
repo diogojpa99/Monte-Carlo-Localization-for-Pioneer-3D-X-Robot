@@ -7,6 +7,14 @@ import plots as pl
     
 """ ************************************* Global Variables ****************************************  """
 
+''' Weights '''
+
+# Our Likelihood is the sum between
+# an normal distrbution and an uniform distribution
+
+w2 = 0.5
+w1 = 1 - w2
+
 ''' Robot '''
 
 # Odometry uncertainty
@@ -20,11 +28,12 @@ odom_uncertainty = (0.2,0.2,0.15)
 N_measures = 24 # Number of measures of the laser model
 laser_reach = 5.6
 laser_radius_var = 10 # Angle of the laser variation
-laser_uncertanty = 0.1
+laser_uncertanty = 0.05
 
 ''' Optimize the algorithm '''
 
-likelihood_sd = 2
+likelihood_sd = 0.8
+likelihood_avg_thresh = pow(10,-10)
 
 
 """  ************************************ Functions  *********************************************** """
@@ -207,10 +216,9 @@ def update(w, robot_measurments, particles, resampling_flag, likelihood_avg, M, 
     for i in range (M):
 
         for j in range (N_measures):
-                w[i] *= normal_dist(robot_measurments[j], distances[j][i], likelihood_sd)
+            w[i] *= ( w1*normal_dist(robot_measurments[j], distances[j][i], likelihood_sd) + w2*(1/laser_reach))
 
-        w[i] += pow(10,-300) # avoid round-off to zero 
-        w[i] *= pow(10,15) 
+        w[i] *= pow(10,10) 
 
         if ( resampling_flag == 0):
             w[i] = w[i] * prev_weights[i]
@@ -219,7 +227,7 @@ def update(w, robot_measurments, particles, resampling_flag, likelihood_avg, M, 
     prev_likelihood_avg = likelihood_avg
     print("Likelihood_avg: ",likelihood_avg)
     likelihood_avg = np.average(w)
-    if(likelihood_avg < pow(10,-6) and prev_likelihood_avg < pow(10,-6)):
+    if(likelihood_avg <  likelihood_avg_thresh  and prev_likelihood_avg < likelihood_avg_thresh ):
         for i in range (int(M*(4/5))):
             particles[i] = selected_map.reposition_particle(particles[i], i)
             particles[i] = selected_map.validate_loc(particles[i])

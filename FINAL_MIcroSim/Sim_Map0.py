@@ -153,19 +153,20 @@ while(1):
         
     # ************************** Output ********************************** #
 
-    print('Real Loc:',"\t", robot_loc[0][0],"\t", robot_loc[1][0],"\t", robot_loc[2][0]*(180/pi))
-
     # Centroid of the cluster of particles
     pred_angle = np.average(particles[:,2])
     robot_angle = robot_loc[2][0]
+
+    if( pred_angle > 2*pi and robot_angle < 2*pi):
+        pred_angle -= 2*pi
+    elif pred_angle < 0 and robot_angle > 0:
+        pred_angle += 2*pi
+    
+    print('Real Loc:',"\t", robot_loc[0][0],"\t", robot_loc[1][0],"\t", robot_loc[2][0]*(180/pi))
     print("Pred Loc:", "\t", np.average(particles[:,0]),"\t", np.average(particles[:,1]),"\t", pred_angle*(180/pi))
     errors[k][0] = abs(np.average(particles[:,0])-robot_loc[0][0])
-    errors[k][1] = abs(np.average(particles[:,1])-robot_loc[1][0])
-
-    if( pred_angle > 180 and robot_angle == 0):
-        robot_angle = robot_angle + 2*pi
-        
-    errors[k][2] = abs(pred_angle - robot_angle)
+    errors[k][1] = abs(np.average(particles[:,1])-robot_loc[1][0])   
+    errors[k][2] = abs(abs(pred_angle - robot_angle))
     print("ERROR:  ","\t",errors[k][0],"\t", errors[k][1],"\t", degrees(errors[k][2]))
     if ( ((errors[k][0] < 0.005) and (errors[k][1] < 0.005) and (errors[k][2] < 0.005)) or k == last_iteration-1):
         break
