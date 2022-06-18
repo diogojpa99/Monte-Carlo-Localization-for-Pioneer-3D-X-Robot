@@ -6,7 +6,7 @@ from math import pi, radians, degrees
 
 
 import plots as pl
-import Map3 as map
+import map_portas_fechadas as map
 import Paricle_Filter as pf
 
 import publish_partics
@@ -86,8 +86,8 @@ particles = map.create_particles(M, particles)
 for i in range (M):
     particles[i] = map.validate_loc(particles[i])
 
-publisher = publish_partics.Particle_Publisher(M=M)
-publisher.initialize_particle_cloud(given_cloud=particles)
+#publisher = publish_partics.Particle_Publisher(M=M)
+#publisher.initialize_particle_cloud(given_cloud=particles)
 # Plotting
 # Activationg interactive mode
 plt.ion()
@@ -148,7 +148,7 @@ while(1):
         if (resampling_flag == 1):
             indexes = pf.low_variance_resample(w)
             particles[:] = particles[indexes]
-            publisher.initialize_particle_cloud(given_cloud=particles)
+            #publisher.initialize_particle_cloud(given_cloud=particles)
             w[:] = w[indexes]
             w /= np.sum(w)
         else:
