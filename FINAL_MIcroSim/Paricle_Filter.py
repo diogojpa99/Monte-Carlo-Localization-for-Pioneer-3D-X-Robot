@@ -12,7 +12,7 @@ import plots as pl
 # Our Likelihood is the sum between
 # an normal distrbution and an uniform distribution
 
-w2 = 0.5
+w2 = 0.4
 w1 = 1 - w2
 
 ''' Robot '''
@@ -25,14 +25,14 @@ odom_uncertainty = (0.2,0.2,0.15)
 
 ''' Laser '''
 
-N_measures = 24 # Number of measures of the laser model
+N_measures = 30 # Number of measures of the laser model
 laser_reach = 5.6
-laser_radius_var = 10 # Angle of the laser variation
+laser_radius_var = 8 # Angle of the laser variation
 laser_uncertanty = 0.05
 
 ''' Optimize the algorithm '''
 
-likelihood_sd = 0.8
+likelihood_sd = 0.95
 likelihood_avg_thresh = 5*pow(10,-5)
 
 
@@ -218,7 +218,7 @@ def update(w, robot_measurments, particles, resampling_flag, likelihood_avg, M, 
         for j in range (N_measures):
             w[i] *= ( w1*normal_dist(robot_measurments[j], distances[j][i], likelihood_sd) + w2*(1/laser_reach))
 
-        w[i] *= pow(10,13) 
+        w[i] *= pow(10,17) 
 
         if ( resampling_flag == 0):
             w[i] = w[i] * prev_weights[i]

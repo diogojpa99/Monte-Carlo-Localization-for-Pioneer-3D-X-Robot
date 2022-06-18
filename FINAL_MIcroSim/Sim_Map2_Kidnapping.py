@@ -171,6 +171,10 @@ while(1):
         pred_angle -= 2*pi
     elif pred_angle < 0 and robot_angle > 0:
         pred_angle += 2*pi
+    elif pred_angle > 0 and robot_angle < 0:
+        pred_angle -= 2*pi
+    elif pred_angle > pi and robot_angle == 0:
+        robot_angle += 2*pi
     
     errors[k][0] = abs(np.average(particles[:,0])-robot_loc[0][0])
     errors[k][1] = abs(np.average(particles[:,1])-robot_loc[1][0])   

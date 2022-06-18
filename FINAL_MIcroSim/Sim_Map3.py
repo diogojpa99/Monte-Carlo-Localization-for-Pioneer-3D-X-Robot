@@ -36,8 +36,8 @@ robot_loc = np.empty([3,1])
 # action[0] : Distance traveled
 # action[1] : Rotation
 actions = np.empty([2,1])
-actions = np.array([(1,45),(1,45),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,180),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
+actions = np.array([(0.5,45),(0.5,45),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0), 
+                    (1,180),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
                     (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0)])
 
 # Last Iteration
@@ -162,6 +162,10 @@ while(1):
         pred_angle -= 2*pi
     elif pred_angle < 0 and robot_angle > 0:
         pred_angle += 2*pi
+    elif pred_angle > 0 and robot_angle < 0:
+        pred_angle -= 2*pi
+    elif pred_angle > pi and robot_angle == 0:
+        robot_angle += 2*pi
     
     errors[k][0] = abs(np.average(particles[:,0])-robot_loc[0][0])
     errors[k][1] = abs(np.average(particles[:,1])-robot_loc[1][0])   
