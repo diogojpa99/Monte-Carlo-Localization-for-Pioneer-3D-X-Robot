@@ -2,7 +2,7 @@ import rospy
 import occupancy_field as occ
 
 from std_msgs.msg import Header
-from geometry_msgs.msg import PoseArray, Pose, Point, Quaternion
+from geometry_msgs.msg import Pose, PoseArray, PoseStamped, Point, Quaternion
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Odometry
 
@@ -14,6 +14,8 @@ import math
 from math import pi, sin, cos
 import random
 import time
+
+import read_from_excel.tings_from_excel as get_tings
 
 ROBOT_DIAMETER = 0.07
 ROBOT_RADIUS = ROBOT_DIAMETER / 2.0
@@ -67,6 +69,7 @@ class Particle_Publisher(object):
         self.num_particles = M
         self.particle_cloud = []
         self.particle_pub = rospy.Publisher("particlecloud", PoseArray, queue_size=10)
+        self.robot_pose_pub = rospy.Publisher("particlebest", PoseStamped, queue_size=10)
 
 
     def initialize_particle_cloud(self, given_cloud=[]):
@@ -116,7 +119,19 @@ class Particle_Publisher(object):
         if total_weights != 1.0:
             for i in self.particle_cloud:
                 i.w = i.w/total_weights
-
+    
+    def publish_robot_path(self):
+            """
+            Publish entire particle cloud as pose array for visualization in RVIZ
+            Also publish the top / best particle based on its weight
+            """
+            # Convert the particles from xy_theta to pose!!
+            
+            for p in self.particle_cloud:
+               
+                robot_pose = p.as_pose()
+                self.robot_pose_pub.publish(header=Header(stamp=rospy.Time.now(), frame_id=self.map_frame), pose=robot_pose)
+                                                    
     def publish_particles(self):
             """
             Publish entire particle cloud as pose array for visualization in RVIZ
@@ -156,10 +171,11 @@ def listener_2():
 
 if __name__ == '__main__':
     print("Starting particle publisher!")
-    n = Particle_Publisher(M = 100)
+    robot_path = get_tings.create_robot_path()
+    n = Particle_Publisher(M = robot_path.shape[0])
     i = 0
     while i < 1000:
-        n.initialize_particle_cloud()
+        n.initialize_particle_cloud(given_cloud=robot_path)
         i+=1
         time.sleep(0.5)
     #listener_1()
