@@ -11,15 +11,13 @@ from math import pi
 ''' Map '''
 
 # Create Map
-map = np.array([[(3,10), (4,10)],
-                [(6,10), (9,10)],
-                [(10,9), (10,0)],
-                [(0,0), (4,0)],
-                [(6,0), (10,0)],
-                [(4,10), (5,9)],
-                [(6,10), (5,9)],
-                [(3,4), (3,15)],
-                [(3,15), (0,15)], 
+map = np.array([[(1,0), (4,0)],
+                [(5,0), (13,0)],
+                [(13,3), (6,3)],
+                [(4,3), (3,3)],
+                [(3,3), (3,7)],
+                [(3,8), (3,12)],
+                [(3,15), (0,15)],
                 [(0,15), (0,0)]] ) 
 
 # Number of walls
@@ -27,7 +25,7 @@ n_walls = map.shape[0]
 
 # Rectangle
 lower = 0
-upper = 10
+upper = 15
 
 
 """  ************************************ Functions  ******************************************** """
@@ -43,12 +41,12 @@ upper = 10
 # particles[:,2] : rotation
 
 def create_particles(M, particles):
-    
-    particles[0:int(M/6), 0] = uniform(0, 3, size = int(M/6))
-    particles[0:int(M/6), 1] = uniform(10, 15, size = int(M/6))
-    particles[int(M/6):M, 0] = uniform(0, 10, size = int((5*M)/6)+1)
-    particles[int(M/6):M, 1] = uniform(0, 10, size = int((5*M)/6)+1)
-    particles[:, 2] = uniform(0, 2*pi, size = M)
+
+    particles[0:int(M/2), 0] = uniform(0, 3, size = int(M/2))
+    particles[0:int(M/2), 1] = uniform(0, 15, size = int(M/2))
+    particles[int(M/2):M, 0] = uniform(3, 13, size = int(M/2))
+    particles[int(M/2):M, 1] = uniform(0, 3, size = int(M/2))
+    particles[0:M, 2] = uniform(0, 2*pi, size = M)
     
     return particles
 
@@ -60,8 +58,8 @@ def reposition_particle(particle, reposition_flag):
         particle[0] = uniform(0, 3, size = 1)
         particle[1] = uniform(0, 15, size = 1)
     else:
-        particle[0] = uniform(0, 10, size = 1)
-        particle[1] = uniform(0, 10, size = 1)
+        particle[0] = uniform(3, 15, size = 1)
+        particle[1] = uniform(0, 4, size = 1)
 
     particle[2] = uniform(0, 2*pi, size = 1)
     
@@ -76,7 +74,7 @@ def reposition_particle(particle, reposition_flag):
 
 def validate_pos(loc):
 
-    if loc[0] < lower - 0.1 or loc[0] > upper + 0.1 or loc[1] < lower - 0.1 or loc[1] > upper + 0.1:
+    if loc[0] < lower - 0.1 or loc[0] > 13 + 0.1 or loc[1] < lower - 0.1 or loc[1] > upper + 0.1:
         return 0
     else:
         return 1
@@ -91,11 +89,18 @@ def validate_loc(loc):
 
     if loc[0] < lower: loc[0] = lower
     elif loc[0] > upper: loc[0] = upper
-
     if loc[1] < lower: loc[1] = lower
+    elif loc[1] > upper: loc[1] = upper
 
-    if (loc[0] < 3) and (loc[1] > 15): loc[1] = 15
-    elif loc[1] > upper and loc[0] > 3: loc[1] = upper
+    if loc[0] > 3 and loc[1] > 3 : 
+        avg_pnt = ((3+3)/2,(3+15)/2) 
+        err1 = sqrt( pow(avg_pnt[0]-loc[0], 2) + pow( avg_pnt[1]-loc[0],2) ) 
+        avg_pnt = ((6+15)/2,(3+3)/2) 
+        err2 = sqrt( pow(avg_pnt[0]-loc[0], 2) + pow( avg_pnt[1]-loc[0],2) ) 
+        if err1 < err2 :
+            loc[0] = 3
+        else:
+            loc[1] = 3
     
+
     return loc
-    

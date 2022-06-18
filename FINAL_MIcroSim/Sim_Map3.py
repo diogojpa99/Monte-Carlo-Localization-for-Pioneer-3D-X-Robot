@@ -6,7 +6,7 @@ from math import pi, radians, degrees
 
 
 import plots as pl
-import Map1 as map
+import Map3 as map
 import Paricle_Filter as pf
 
 
@@ -36,9 +36,9 @@ robot_loc = np.empty([3,1])
 # action[0] : Distance traveled
 # action[1] : Rotation
 actions = np.empty([2,1])
-actions = np.array([(1,-90),(1,0),(1,0),(1,0),(1,0),(1,0), (1,0), (1,0),(1,0),(1,0), (1,0),(1,0),(1,0),
-                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,180),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0)])
+actions = np.array([(1,45),(1,45),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
+                    (1,180),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
+                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0)])
 
 # Last Iteration
 last_iteration = actions.shape[0]
@@ -68,7 +68,7 @@ errors.fill(1.)
 def init_robot_pos(loc):
 
     loc[0] = 0
-    loc[1] = 14
+    loc[1] = 0
     loc[2] = 0
 
     return loc

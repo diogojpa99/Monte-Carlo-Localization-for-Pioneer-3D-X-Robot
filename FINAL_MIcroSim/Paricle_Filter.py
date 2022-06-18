@@ -33,7 +33,7 @@ laser_uncertanty = 0.05
 ''' Optimize the algorithm '''
 
 likelihood_sd = 0.8
-likelihood_avg_thresh = pow(10,-10)
+likelihood_avg_thresh = 5*pow(10,-5)
 
 
 """  ************************************ Functions  *********************************************** """
@@ -218,7 +218,7 @@ def update(w, robot_measurments, particles, resampling_flag, likelihood_avg, M, 
         for j in range (N_measures):
             w[i] *= ( w1*normal_dist(robot_measurments[j], distances[j][i], likelihood_sd) + w2*(1/laser_reach))
 
-        w[i] *= pow(10,10) 
+        w[i] *= pow(10,13) 
 
         if ( resampling_flag == 0):
             w[i] = w[i] * prev_weights[i]
