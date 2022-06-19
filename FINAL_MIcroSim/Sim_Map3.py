@@ -42,9 +42,9 @@ robot_loc = np.empty([3,1])
 # action[0] : Distance traveled
 # action[1] : Rotation
 actions = np.empty([2,1])
-actions = np.array([(0.5,45),(0.5,45),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0), 
+actions = np.array([(0.5,45),(0.5,45),(1,0),(1,0),(1,0),(1,0),(1,15),(1,-15),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0), 
                     (1,180),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0)])
+                    (0,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0)])
 
 # Last Iteration
 last_iteration = actions.shape[0]
@@ -121,6 +121,7 @@ while(1):
 
     # ************************** Algorithm  ********************************** #
 
+    print("Nº of particles:", M)
     if (actions[k][0] == 0 and actions[k][1] == 0):
         print('ROBOT DID NOT MOVE')
     else:
@@ -131,7 +132,7 @@ while(1):
             particles[i] = map.validate_loc(particles[i])
         
         # UPDATE
-        w, likelihood_avg = pf.update(w, robot_measures, particles, resampling_flag, likelihood_avg, M, robot_loc, map)
+        w, likelihood_avg, resize_flag = pf.update(w, robot_measures, particles, resampling_flag, likelihood_avg, M, robot_loc, map)
         
         # n_eff
         n_eff_inverse = 0
@@ -141,20 +142,37 @@ while(1):
         
         n_eff = 1/n_eff_inverse
         print("[Neff] -> ", n_eff)
-        if ( n_eff < M/2 ):
+        if ( n_eff < M*0.27 ):
             resampling_flag = 1
         else:
             resampling_flag = 0
+            resize_flag = 2
         
         # RESAMPLING
         if (resampling_flag == 1):
-            indexes = pf.low_variance_resample(w)
-            particles[:] = particles[indexes]
-            w[:] = w[indexes]
-            w /= np.sum(w)
+            particles = pf.low_variance_resample(w, M , particles)
         else:
             print('NO RESAMPLE')
+    
+    # Resizing the number of particles
+    if resize_flag == 1:
 
+        # High probability of kidnapping
+        more_particles = map.create_particles( int(M*1.2))
+        more_particles[0:M] = particles
+        particles = more_particles
+        M = int(M*1.2)
+        
+        for i in range (int(M*0.9)):
+            particles[i] = map.reposition_particle(particles[i], i )
+            particles[i] = map.validate_loc(particles[i])
+
+    
+    elif resize_flag == 2:
+
+        if ( M > int(original_M*0.3)):
+            M = int(M*0.8)
+            particles = particles[0:M]
         
     # ************************** Output ********************************** #
 
@@ -186,7 +204,6 @@ while(1):
     # Plotting
     pl.plot_simulation('Particle Filter Simulation',robot_loc, particles, map.n_walls, map.map, M)
     plt.clf()
-
 
     if ( ((errors[k][0] < 0.005) and (errors[k][1] < 0.005) and (errors[k][2] < 0.005)) or k == last_iteration-1):
         break

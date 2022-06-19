@@ -141,7 +141,7 @@ while(1):
         
         n_eff = 1/n_eff_inverse
         print("[Neff] -> ", n_eff)
-        if ( n_eff < M*0.35 ):
+        if ( n_eff < M*0.3 ):
             resampling_flag = 1
         else:
             resampling_flag = 0
@@ -149,10 +149,8 @@ while(1):
         
         # RESAMPLING
         if (resampling_flag == 1):
-            indexes = pf.low_variance_resample(w)
-            particles[:] = particles[indexes]
-            w[:] = w[indexes]
-            w /= np.sum(w)
+            particles = pf.low_variance_resample(w, M , particles)
+            
         else:
             print('NO RESAMPLE')
     
@@ -171,7 +169,7 @@ while(1):
 
     elif resize_flag == 2:
 
-        if ( M > int(original_M*0.35)):
+        if ( M > int(original_M*0.3)):
             M = int(M*0.8)
             particles = particles[0:M]
 
@@ -206,7 +204,6 @@ while(1):
     # Plotting
     pl.plot_simulation('Particle Filter Simulation',robot_loc, particles, map.n_walls, map.map, M)
     plt.clf()
-
 
     if ( ((errors[k][0] < 0.005) and (errors[k][1] < 0.005) and (errors[k][2] < 0.005)) or k == last_iteration-1):
         break

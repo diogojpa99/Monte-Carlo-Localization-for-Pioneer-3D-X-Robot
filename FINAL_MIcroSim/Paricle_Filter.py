@@ -34,7 +34,7 @@ laser_uncertanty = 0.05
 ''' Optimize the algorithm '''
 
 likelihood_sd = 1
-likelihood_avg_thresh = pow(10,-3)
+likelihood_avg_thresh = 5*pow(10,-5)
 
 
 """  ************************************ Functions  *********************************************** """
@@ -250,20 +250,21 @@ def update(w, robot_measurments, particles, resampling_flag, likelihood_avg, M, 
     return w,likelihood_avg, resize_flag
 
 # RESAMPLING
-def low_variance_resample(weights):
+def low_variance_resample(weights, M, particles):
 
-    N = len(weights)
-    positions = (np.arange(N) + np.random.random()) / N
-    indexes = np.zeros(N, 'i')
+    positions = (np.arange(M) + np.random.random()) / M
+    indexes = np.zeros(M, 'i')
     cumulative_sum = np.cumsum(weights)
     i, j = 0, 0
 
-    while i < N and j<N:
+    while i < M and j<M:
         if positions[i] < cumulative_sum[j]:
             indexes[i] = j
             i += 1
         else:
             j += 1
 
-    return indexes
+    particles[:] = particles[indexes]
+
+    return particles
 

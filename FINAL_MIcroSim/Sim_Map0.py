@@ -145,7 +145,7 @@ while(1):
         
         n_eff = 1/n_eff_inverse
         print("[Neff] -> ", n_eff)
-        if ( n_eff < M*0.35 ):
+        if ( n_eff < M*0.27 ):
             resampling_flag = 1
         else:
             resampling_flag = 0
@@ -153,8 +153,7 @@ while(1):
 
         # RESAMPLING
         if (resampling_flag == 1):
-            indexes = pf.low_variance_resample(w)
-            particles[:] = particles[indexes]
+            particles = pf.low_variance_resample(w, M , particles)
         else:
             print('NO RESAMPLE')
 
@@ -173,7 +172,7 @@ while(1):
 
     elif resize_flag == 2:
 
-        if ( M > int(original_M*0.35)):
+        if ( M > int(original_M*0.3)):
             M = int(M*0.8)
             particles = particles[0:M]
 
