@@ -34,7 +34,7 @@ laser_uncertanty = 0.05
 ''' Optimize the algorithm '''
 
 likelihood_sd = 1
-likelihood_avg_thresh = 5*pow(10,-5)
+likelihood_avg_thresh = pow(10,-4)
 
 
 """  ************************************ Functions  *********************************************** """
@@ -238,9 +238,8 @@ def update(w, robot_measurments, particles, resampling_flag, likelihood_avg, M, 
     if(likelihood_avg <  likelihood_avg_thresh  and prev_likelihood_avg < likelihood_avg_thresh ):
         resize_flag = 1 #We increase the number
 
-
     #Normalise
-    w = w / w.sum() 
+    w /= sum(w) 
     
     #If all the weigths are the same do not resample
     if np.all(w == w[0]):

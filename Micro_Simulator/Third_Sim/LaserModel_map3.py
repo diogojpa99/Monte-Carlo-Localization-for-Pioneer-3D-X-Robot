@@ -42,10 +42,10 @@ upper = 15
 M = 500
 
 # Number of measures of the laser model
-N_measures = 10
+N_measures = 30
 
 # Angle of the laser variation
-radius_var = 24
+radius_var = 8
 
 #Actions
 # action[0] : cmd_vel1
@@ -225,7 +225,7 @@ def laser_model(loc):
 
     measures = np.empty([N_measures,1])
     measures.fill(0.)
-    reach = 4
+    reach = 5.6
     x1 = loc[0][0]
     y1 = loc[1][0]
     teta = loc[2][0]

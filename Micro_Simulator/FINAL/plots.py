@@ -39,7 +39,7 @@ def plot_simulation(label, robot_loc, particles, n_walls, map, M):
 
     # Plot robot
     plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = '#d62728' , s=180, label = "Real position", edgecolors='black')
-    plt.plot((robot_loc[0],(1/8)*cos(robot_loc[2])+robot_loc[0]),(robot_loc[1],(1/8)*sin(robot_loc[2])+robot_loc[1]), c = '#17becf')
+    plt.plot((robot_loc[0],(1/6)*cos(robot_loc[2])+robot_loc[0]),(robot_loc[1],(1/6)*sin(robot_loc[2])+robot_loc[1]), c = '#17becf')
     plt.xlabel('x')
     plt.ylabel('y')
     plt.legend(loc='upper right')

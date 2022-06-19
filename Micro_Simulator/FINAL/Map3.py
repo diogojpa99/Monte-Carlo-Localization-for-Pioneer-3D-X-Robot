@@ -95,9 +95,9 @@ def validate_loc(loc):
 
     if loc[0] > 3 and loc[1] > 3 : 
         avg_pnt = ((3+3)/2,(3+15)/2) 
-        err1 = sqrt( pow(avg_pnt[0]-loc[0], 2) + pow( avg_pnt[1]-loc[0],2) ) 
+        err1 = sqrt( pow(avg_pnt[0]-loc[0], 2) + pow( avg_pnt[1]-loc[1],2) ) 
         avg_pnt = ((6+15)/2,(3+3)/2) 
-        err2 = sqrt( pow(avg_pnt[0]-loc[0], 2) + pow( avg_pnt[1]-loc[0],2) ) 
+        err2 = sqrt( pow(avg_pnt[0]-loc[0], 2) + pow( avg_pnt[1]-loc[1],2) ) 
         if err1 < err2 :
             loc[0] = 3
         else:
