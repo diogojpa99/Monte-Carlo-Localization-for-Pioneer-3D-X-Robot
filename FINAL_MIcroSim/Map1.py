@@ -42,8 +42,9 @@ upper = 15
 # particles[:,1] : y position
 # particles[:,2] : rotation
 
-def create_particles(M, particles):
+def create_particles(M):
 
+    particles = np.empty([M, 3])
     particles[0:int(M/2), 0] = uniform(0, 3, size = int(M/2))
     particles[0:int(M/2), 1] = uniform(0, 15, size = int(M/2))
     particles[int(M/2):M, 0] = uniform(3, 15, size = int(M/2))

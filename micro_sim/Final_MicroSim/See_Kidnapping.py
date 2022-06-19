@@ -261,10 +261,9 @@ def laser_model(loc):
         
         #Creating line segment
         ray = np.array([(x1,y1), (x1+reach*cos(teta + radians(radius)), y1+reach*sin(teta + radians(radius))) ]) 
-        '''
         if loc[0] == robot_loc[0] and loc[1] == robot_loc[1] and loc[2] == robot_loc[2]  :
            plt.plot((x1,reach*cos(teta + radians(radius))+x1),(y1,reach*sin(teta + radians(radius))+y1) , c = '#17becf')
-        '''
+        
 
         #Intersect Between the laser ray an a wall
         for j in range(n_walls):

@@ -1,6 +1,7 @@
 """ *********************************** Libraries ************************************************* """
 
 import numpy as np
+import matplotlib.pyplot as plt
 from math import cos, sin, sqrt, exp, pi, radians
 
 import plots as pl
@@ -21,7 +22,7 @@ w1 = 1 - w2
 # odom_uncertainty[0]: x
 # odom_uncertainty[1]: y
 # odom_uncertainty[2]: Rotation
-odom_uncertainty = (0.2,0.2,0.15)
+odom_uncertainty = (0.15,0.15,0.15)
 
 ''' Laser '''
 
@@ -32,8 +33,8 @@ laser_uncertanty = 0.05
 
 ''' Optimize the algorithm '''
 
-likelihood_sd = 0.95
-likelihood_avg_thresh = 5*pow(10,-5)
+likelihood_sd = 1
+likelihood_avg_thresh = pow(10,-3)
 
 
 """  ************************************ Functions  *********************************************** """
@@ -119,6 +120,8 @@ def odometry_model(loc, deltaD, rotation, particle_flag):
 # PREDICT
 def predict(particles, actions, M):
 
+    particles = particles.reshape([M,3])
+
     for i in range(M):
         particles[i]  = odometry_model(particles[i], actions[0], actions[1]*(pi/180), 1).reshape((3,))     
         
@@ -151,7 +154,7 @@ def laser_model(loc, n_walls, robot_loc, selected_map):
         ray = np.array([(x1,y1), (x1+laser_reach*cos(teta + radians(laser_radius)), y1+laser_reach*sin(teta + radians(laser_radius))) ]) 
         '''
         if loc[0] == robot_loc[0] and loc[1] == robot_loc[1] and loc[2] == robot_loc[2]  :
-           plt.plot((x1,reach*cos(teta + radians(radius))+x1),(y1,reach*sin(teta + radians(radius))+y1) , c = '#17becf')
+           plt.plot((x1,laser_reach*cos(teta + radians(laser_radius))+x1),(y1,laser_reach*sin(teta + radians(laser_radius))+y1) , c = '#17becf')
         '''
 
         #Intersect Between the laser ray an a wall
@@ -202,10 +205,13 @@ def update(w, robot_measurments, particles, resampling_flag, likelihood_avg, M, 
     distances = np.empty([N_measures,M])
     distances.fill(0.)
 
+    resize_flag = 0 # Flag that determines if we are going to change the numbe rof particles
+
     if resampling_flag == 1:
         w = np.empty([M,1])
         w.fill(1.)
     elif resampling_flag == 0:
+        w = w[0:M]
         prev_weights = w
 
     # Compute the measures for each particle
@@ -227,10 +233,11 @@ def update(w, robot_measurments, particles, resampling_flag, likelihood_avg, M, 
     prev_likelihood_avg = likelihood_avg
     print("Likelihood_avg: ",likelihood_avg)
     likelihood_avg = np.average(w)
+    
+    # We assume that there was a kidnapping 
     if(likelihood_avg <  likelihood_avg_thresh  and prev_likelihood_avg < likelihood_avg_thresh ):
-        for i in range (int(M*(4/5))):
-            particles[i] = selected_map.reposition_particle(particles[i], i)
-            particles[i] = selected_map.validate_loc(particles[i])
+        resize_flag = 1 #We increase the number
+
 
     #Normalise
     w = w / w.sum() 
@@ -240,21 +247,23 @@ def update(w, robot_measurments, particles, resampling_flag, likelihood_avg, M, 
         resampling_flag = 0
         
 
-    return w,likelihood_avg
+    return w,likelihood_avg, resize_flag
 
 # RESAMPLING
 def low_variance_resample(weights):
+
     N = len(weights)
     positions = (np.arange(N) + np.random.random()) / N
- 
     indexes = np.zeros(N, 'i')
     cumulative_sum = np.cumsum(weights)
     i, j = 0, 0
+
     while i < N and j<N:
         if positions[i] < cumulative_sum[j]:
             indexes[i] = j
             i += 1
         else:
             j += 1
+
     return indexes
 

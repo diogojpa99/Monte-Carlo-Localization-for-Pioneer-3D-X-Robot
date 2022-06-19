@@ -15,7 +15,13 @@ import Paricle_Filter as pf
 ''' Particles '''
 
 # Number of particles
-M = 1000
+original_M = M = 1200
+
+# Flag that defines the number of particles
+# resize_flag = 0 : Don't do nothing
+# resize_flag = 1 : Increase number of particles
+# resize_flag = 2 : Decrease number of particles
+resize_flag = 0
 
 # Particles
 particles = np.empty([M, 3])
@@ -37,8 +43,7 @@ robot_loc = np.empty([3,1])
 # action[1] : Rotation
 actions = np.empty([2,1])
 actions = np.array([(1,-90),(1,0),(1,0),(1,0),(1,0),(1,0), (1,0), (1,0),(1,0),(1,0), (1,0),(1,0),(1,0),
-                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),
-                    (1,180),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0)])
+                    (1,90),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),(1,0),])
 
 # Last Iteration
 last_iteration = actions.shape[0]
@@ -80,7 +85,7 @@ def init_robot_pos(loc):
 robot_loc = init_robot_pos(robot_loc)
 
 # Create particles
-particles = map.create_particles(M, particles)
+particles = map.create_particles(M)
 for i in range (M):
     particles[i] = map.validate_loc(particles[i])
 
@@ -115,6 +120,7 @@ while(1):
 
     # ************************** Algorithm  ********************************** #
 
+    print("Nº of particles:", M)
     if (actions[k][0] == 0 and actions[k][1] == 0):
         print('ROBOT DID NOT MOVE')
     else:
@@ -125,7 +131,7 @@ while(1):
             particles[i] = map.validate_loc(particles[i])
         
         # UPDATE
-        w, likelihood_avg = pf.update(w, robot_measures, particles, resampling_flag, likelihood_avg, M, robot_loc, map)
+        w, likelihood_avg, resize_flag = pf.update(w, robot_measures, particles, resampling_flag, likelihood_avg, M, robot_loc, map)
         
         # n_eff
         n_eff_inverse = 0
@@ -135,10 +141,11 @@ while(1):
         
         n_eff = 1/n_eff_inverse
         print("[Neff] -> ", n_eff)
-        if ( n_eff < M/2 ):
+        if ( n_eff < M*0.35 ):
             resampling_flag = 1
         else:
             resampling_flag = 0
+            resize_flag = 2
         
         # RESAMPLING
         if (resampling_flag == 1):
@@ -148,6 +155,25 @@ while(1):
             w /= np.sum(w)
         else:
             print('NO RESAMPLE')
+    
+    # Resizing the number of particles
+    if resize_flag == 1:
+
+        # High probability of kidnapping
+        more_particles = map.create_particles(int(M*1.2))
+        more_particles[0:M] = particles
+        particles = more_particles
+        M = int(M*1.2)
+        
+        for i in range (int(M*0.9)):
+            particles[i] = map.reposition_particle(particles[i], i )
+            particles[i] = map.validate_loc(particles[i])
+
+    elif resize_flag == 2:
+
+        if ( M > int(original_M*0.35)):
+            M = int(M*0.8)
+            particles = particles[0:M]
 
         
     # ************************** Output ********************************** #
@@ -156,21 +182,24 @@ while(1):
     pred_angle = np.average(particles[:,2])
     robot_angle = robot_loc[2][0]
 
-    if( pred_angle > 2*pi and robot_angle < 2*pi):
+    if pred_angle > pi:
         pred_angle -= 2*pi
-    elif( pred_angle > 2*pi and robot_angle == 2*pi):
-        pred_angle -= 2*pi
-    elif pred_angle < 0 and robot_angle > 0:
+    elif pred_angle < -pi:
         pred_angle += 2*pi
-    elif pred_angle > 0 and robot_angle < 0:
-        pred_angle -= 2*pi
-    elif pred_angle > pi and robot_angle == 0:
+
+    if robot_angle > pi:
+        robot_angle = robot_angle - 2*pi
+    elif robot_angle < -pi:
         robot_angle += 2*pi
 
     errors[k][0] = abs(np.average(particles[:,0])-robot_loc[0][0])
     errors[k][1] = abs(np.average(particles[:,1])-robot_loc[1][0])   
-    errors[k][2] = abs(pred_angle - robot_angle)
-    print('Real Loc:',"\t", robot_loc[0][0],"\t", robot_loc[1][0],"\t", robot_loc[2][0]*(180/pi))
+    errors[k][2] = abs(pred_angle - robot_angle) 
+
+    if ( errors[k][2] > (5/3)*pi):
+         errors[k][2] = abs(2*pi - errors[k][2])
+        
+    print('Real Loc:',"\t", robot_loc[0][0],"\t", robot_loc[1][0],"\t", robot_angle*(180/pi))
     print("Pred Loc:", "\t", np.average(particles[:,0]),"\t", np.average(particles[:,1]),"\t", pred_angle*(180/pi))
     print("ERROR:  ","\t",errors[k][0],"\t", errors[k][1],"\t", degrees(errors[k][2]))
 
@@ -182,6 +211,7 @@ while(1):
     if ( ((errors[k][0] < 0.005) and (errors[k][1] < 0.005) and (errors[k][2] < 0.005)) or k == last_iteration-1):
         break
 
+    resize_flag = 0  
     k +=1
 
 # Plotting Statistics

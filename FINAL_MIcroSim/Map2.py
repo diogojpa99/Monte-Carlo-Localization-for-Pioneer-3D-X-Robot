@@ -42,8 +42,9 @@ upper = 10
 # particles[:,1] : y position
 # particles[:,2] : rotation
 
-def create_particles(M, particles):
+def create_particles(M):
     
+    particles = np.empty([M, 3])
     particles[0:int(M/6), 0] = uniform(0, 3, size = int(M/6))
     particles[0:int(M/6), 1] = uniform(10, 15, size = int(M/6))
     particles[int(M/6):M, 0] = uniform(0, 10, size = int((5*M)/6)+1)
@@ -76,7 +77,7 @@ def reposition_particle(particle, reposition_flag):
 
 def validate_pos(loc):
 
-    if loc[0] < lower - 0.1 or loc[0] > upper + 0.1 or loc[1] < lower - 0.1 or loc[1] > upper + 0.1:
+    if loc[0] < lower - 0.1 or loc[0] > upper + 0.1 or loc[1] < lower - 0.1 or loc[1] > 15 + 0.1:
         return 0
     else:
         return 1

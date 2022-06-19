@@ -15,7 +15,13 @@ import Paricle_Filter as pf
 ''' Particles '''
 
 # Number of particles
-M = 1000
+original_M = M = 1400
+
+# Flag that defines the number of particles
+# resize_flag = 0 : Don't do nothing
+# resize_flag = 1 : Increase number of particles
+# resize_flag = 2 : Decrease number of particles
+resize_flag = 0
 
 # Particles
 particles = np.empty([M, 3])
@@ -80,7 +86,7 @@ def init_robot_pos(loc):
 robot_loc = init_robot_pos(robot_loc)
 
 # Create particles
-particles = map.create_particles(M, particles)
+particles = map.create_particles(M)
 for i in range (M):
     particles[i] = map.validate_loc(particles[i])
 
@@ -156,21 +162,24 @@ while(1):
     pred_angle = np.average(particles[:,2])
     robot_angle = robot_loc[2][0]
 
-    if( pred_angle > 2*pi and robot_angle < 2*pi):
+    if pred_angle > pi:
         pred_angle -= 2*pi
-    elif( pred_angle > 2*pi and robot_angle == 2*pi):
-        pred_angle -= 2*pi
-    elif pred_angle < 0 and robot_angle > 0:
+    elif pred_angle < -pi:
         pred_angle += 2*pi
-    elif pred_angle > 0 and robot_angle < 0:
-        pred_angle -= 2*pi
-    elif pred_angle > pi and robot_angle == 0:
+
+    if robot_angle > pi:
+        robot_angle = robot_angle - 2*pi
+    elif robot_angle < -pi:
         robot_angle += 2*pi
-    
+
     errors[k][0] = abs(np.average(particles[:,0])-robot_loc[0][0])
     errors[k][1] = abs(np.average(particles[:,1])-robot_loc[1][0])   
-    errors[k][2] = abs(pred_angle - robot_angle)
-    print('Real Loc:',"\t", robot_loc[0][0],"\t", robot_loc[1][0],"\t", robot_loc[2][0]*(180/pi))
+    errors[k][2] = abs(pred_angle - robot_angle) 
+
+    if ( errors[k][2] > (5/3)*pi):
+         errors[k][2] = abs(2*pi - errors[k][2])
+        
+    print('Real Loc:',"\t", robot_loc[0][0],"\t", robot_loc[1][0],"\t", robot_angle*(180/pi))
     print("Pred Loc:", "\t", np.average(particles[:,0]),"\t", np.average(particles[:,1]),"\t", pred_angle*(180/pi))
     print("ERROR:  ","\t",errors[k][0],"\t", errors[k][1],"\t", degrees(errors[k][2]))
 
