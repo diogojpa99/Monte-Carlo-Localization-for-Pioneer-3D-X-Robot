@@ -22,19 +22,19 @@ w1 = 1 - w2
 # odom_uncertainty[0]: x
 # odom_uncertainty[1]: y
 # odom_uncertainty[2]: Rotation
-odom_uncertainty = (0.15,0.15,0.15)
+odom_uncertainty = (0.15,0.15,0.1)
 
 ''' Laser '''
 
-N_measures = 30 # Number of measures of the laser model
+N_measures = 24 # Number of measures of the laser model
 laser_reach = 5.6
-laser_radius_var = 8 # Angle of the laser variation
-laser_uncertanty = 0.05
+laser_radius_var = 10 # Angle of the laser variation
+laser_uncertanty = 0.15
 
 ''' Optimize the algorithm '''
 
-likelihood_sd = 1
-likelihood_avg_thresh = pow(10,-4)
+likelihood_sd = 2.5
+likelihood_avg_thresh = pow(10,-20)
 
 
 """  ************************************ Functions  *********************************************** """
@@ -140,7 +140,7 @@ def laser_model(loc, n_walls, robot_loc, selected_map):
     teta = loc[2][0]
 
     # Laser radius
-    laser_radius = -120 #Variação de ângulo do laser
+    laser_radius = -119 #Variação de ângulo do laser
     
     # Variable that determines which wall the laser intersected
     # An laser ray only can intersect one wall
@@ -152,10 +152,8 @@ def laser_model(loc, n_walls, robot_loc, selected_map):
         
         #Creating line segment
         ray = np.array([(x1,y1), (x1+laser_reach*cos(teta + radians(laser_radius)), y1+laser_reach*sin(teta + radians(laser_radius))) ]) 
-        '''
-        if loc[0] == robot_loc[0] and loc[1] == robot_loc[1] and loc[2] == robot_loc[2]  :
-           plt.plot((x1,laser_reach*cos(teta + radians(laser_radius))+x1),(y1,laser_reach*sin(teta + radians(laser_radius))+y1) , c = '#17becf')
-        '''
+        '''if loc[0] == robot_loc[0] and loc[1] == robot_loc[1] and loc[2] == robot_loc[2]  :
+           plt.plot((x1,laser_reach*cos(teta + radians(laser_radius))+x1),(y1,laser_reach*sin(teta + radians(laser_radius))+y1) , c = '#17becf')'''
 
         #Intersect Between the laser ray an a wall
         for j in range(n_walls):
@@ -221,10 +219,10 @@ def update(w, robot_measurments, particles, resampling_flag, likelihood_avg, M, 
     #The weights are the product of the likelihoods of the measurments  
     for i in range (M):
 
-        for j in range (N_measures):
+        for j in range(N_measures):
             w[i] *= ( w1*normal_dist(robot_measurments[j], distances[j][i], likelihood_sd) + w2*(1/laser_reach))
 
-        w[i] *= pow(10,17) 
+        w[i] *= pow(10,15) 
 
         if ( resampling_flag == 0):
             w[i] = w[i] * prev_weights[i]

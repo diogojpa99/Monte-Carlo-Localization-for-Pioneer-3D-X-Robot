@@ -45,28 +45,40 @@ def callback(msg):
     list_new.append(z)
     list_new.append(w)
 
-    return
 
 def callback2(data):
     
     vetor =[
-    (data.ranges[72]),
-    (data.ranges[128]),
-    (data.ranges[214]),
-    (data.ranges[299]),
-    (data.ranges[384]),
-    (data.ranges[470]),
-    (data.ranges[555]),
-    (data.ranges[640]),
-    (data.ranges[697])]
+    (data.ranges[46]),
+    (data.ranges[74]),
+    (data.ranges[103]),
+    (data.ranges[131]),
+    (data.ranges[160]),
+    (data.ranges[188]),
+    (data.ranges[217]),
+    (data.ranges[245]),
+    (data.ranges[274]),
+    (data.ranges[302]),
+    (data.ranges[330]),
+    (data.ranges[359]),
+    (data.ranges[387]),
+    (data.ranges[416]),
+    (data.ranges[444]),
+    (data.ranges[473]),
+    (data.ranges[501]),
+    (data.ranges[530]),
+    (data.ranges[558]),
+    (data.ranges[586]),
+    (data.ranges[615]),
+    (data.ranges[643]),
+    (data.ranges[672]),
+    (data.ranges[700])]
 
     dist.clear()
     dist.append(vetor)
 
-    return
 
-
-def get_actions():
+def get_data():
 
     pose_x=0
     pose_y=0
@@ -93,8 +105,7 @@ def get_actions():
                 list_prev.append(list_new[x])
             
         deltaD = math.sqrt((pose_x**2)+(pose_y**2))
-        print(deltaD, delta_theta)
         r.sleep()
 
-        return deltaD, delta_theta
+        return deltaD, delta_theta, dist
     

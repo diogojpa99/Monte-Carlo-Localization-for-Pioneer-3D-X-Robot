@@ -32,7 +32,7 @@ def plot_simulation(label, robot_loc, particles, n_walls, map, M):
     
     # Plot Particles
     plt.scatter(x, y, c = z, s=5, label = "particles")
-    '''
+    '''´
     for i in range(M):
        plt.scatter(particles[i,0], particles[i,1], marker = (3, 0, particles[i,2]*(180/pi)), c = 'blue' , s = 10)
     '''

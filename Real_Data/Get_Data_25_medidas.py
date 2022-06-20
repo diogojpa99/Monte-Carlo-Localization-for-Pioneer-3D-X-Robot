@@ -67,7 +67,7 @@ def callback3(data):
 
 def callback2(data):
     
-  vetor=[
+    vetor =[
     (data.ranges[46]),
     (data.ranges[74]),
     (data.ranges[103]),

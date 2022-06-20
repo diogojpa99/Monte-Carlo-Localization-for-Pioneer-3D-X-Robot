@@ -8,7 +8,7 @@ from math import pi, radians, degrees, sin, cos
 import plots as pl
 import Real_Map as map
 import Paricle_Filter as pf
-import Get_Actions as ac
+import Get_Data as data
 
 
 """ ************************************* Global Variables ****************************************  """
@@ -96,16 +96,25 @@ while(1):
     # *********************** Robot simulation ******************************** #
     print("-----------------------------------------------------------------------------------")
     print("\t\t\tIteration nº:",k+1)
-  
-    actions[0], actions[1] = ac.get_actions()
+
+    actions[0], actions[1], measures = data.get_data()
     print("DeltaD", actions[0],"DeltaTheta", actions[1])
+    #print(measures)
+    measures = np.array(measures)
+    if len(measures) != 0:
+        measures = measures.reshape([measures.shape[1],1])
+    print(measures.shape)
+    print(measures)
+    measures[np.isnan(measures)] = 0
+    print("--------------")
+    print(measures)
+
+
+
 
     # Update localization of the robot
     robot_loc = pf.odometry_model(robot_loc, actions[0], radians(actions[1]), 0)
     robot_loc = map.validate_loc(robot_loc)
-
-    # Retrieving data from the laser
-    #robot_measures = pf.laser_model(robot_loc, map.n_walls, robot_loc, map)
 
     if (actions[0] == 0 and actions[1] == 0): 
         print('ROBOT DID NOT MOVE')
@@ -115,6 +124,13 @@ while(1):
         plt.plot((map.map[i][0][0],map.map[i][1][0]),(map.map[i][0][1],map.map[i,1,1]), c = 'black')
     
     # Plot robot
+    print("Robot:",robot_loc[0], robot_loc[1])
+    j = -119
+
+    for i in range (measures.shape[0]):
+        plt.scatter(robot_loc[0] + measures[i]*cos(robot_loc[2] + radians(j)), measures[i]*sin(robot_loc[2] + radians(j)) + robot_loc[1], s = 3,  c = '#e377c2')  
+        j += 10   
+
     plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = '#d62728' , s=180, label = "Real position", edgecolors='black')
     plt.plot((robot_loc[0],(1/6)*cos(robot_loc[2])+robot_loc[0]),(robot_loc[1],(1/6)*sin(robot_loc[2])+robot_loc[1]), c = '#17becf')
     plt.pause(0.01)
