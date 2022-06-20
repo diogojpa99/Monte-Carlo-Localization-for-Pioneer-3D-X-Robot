@@ -23,7 +23,7 @@ dist=[]
 pose_x=0
 pose_y=0
 delta_theta=0
-
+counter = 0
 def quaternion_to_euler(z, w):
     t3=+2.0*(w*z)
     t4=+1.0-2.0*(z**2)
@@ -58,15 +58,31 @@ def callback(msg):
 def callback2(data):
     
     vetor =[
-    (data.ranges[72]),
-    (data.ranges[128]),
-    (data.ranges[214]),
-    (data.ranges[299]),
+    (data.ranges[46]),
+    (data.ranges[74]),
+    (data.ranges[103]),
+    (data.ranges[131]),
+    (data.ranges[160]),
+    (data.ranges[188]),
+    (data.ranges[217]),
+    (data.ranges[245]),
+    (data.ranges[274]),
+    (data.ranges[302]),
+    (data.ranges[330]),
+    (data.ranges[359]),
     (data.ranges[384]),
-    (data.ranges[470]),
-    (data.ranges[555]),
-    (data.ranges[640]),
-    (data.ranges[697])]
+    (data.ranges[410]),
+    (data.ranges[439]),
+    (data.ranges[467]),
+    (data.ranges[495]),
+    (data.ranges[524]),
+    (data.ranges[552]),
+    (data.ranges[581]),
+    (data.ranges[609]),
+    (data.ranges[638]),
+    (data.ranges[666]),
+    (data.ranges[695]),
+    (data.ranges[723])]
 
     dist.clear()
     dist.append(vetor)
@@ -77,7 +93,7 @@ if __name__ == '__main__':
     r = rospy.Rate(1)   # leituras por segundo
     while not rospy.is_shutdown():
         rospy.Subscriber("pose", Odometry, callback)
-        rospy.Subscriber("scan",LaserScan, callback2)
+        rospy.Subscriber("scan", LaserScan, callback2)
         #pose=np.array(list_new)-np.array(list_prev)
         #print("list prev: ", list_prev)
         if list_new:
@@ -92,7 +108,7 @@ if __name__ == '__main__':
             
         deltaD=math.sqrt((pose_x**2)+(pose_y**2))
         #print("list new: ", list_new)
-        print(deltaD, delta_theta)
+        #print(deltaD, delta_theta)
         #print(pose_x)
         #print(dist)
         r.sleep()
