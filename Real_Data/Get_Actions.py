@@ -23,7 +23,7 @@ dist=[]
 pose_x=0
 pose_y=0
 delta_theta=0
-counter = 0
+
 def quaternion_to_euler(z, w):
     t3=+2.0*(w*z)
     t4=+1.0-2.0*(z**2)
