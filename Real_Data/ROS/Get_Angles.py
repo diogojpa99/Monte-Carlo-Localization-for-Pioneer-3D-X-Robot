@@ -3,6 +3,8 @@
 from math import pi
 import rospy
 from sensor_msgs.msg import LaserScan
+import numpy as np
+
 
 MEASURES = {
     -119,
@@ -42,6 +44,19 @@ def callback1(data):
     angles_vector.clear()
     for angle in MEASURES:
         pos = ((angle) - (-(max_ang))) / inc
+<<<<<<< Updated upstream:Real_Data/ROS/Get_Angles.py
+=======
+        print(angle)
+        print(int(pos)+44)
+        print("\n")
+        angles_vector.append(int(pos)+44)
+    print(angles_vector)
+    print("\n")
+    angles_vector.sort()
+    print(angles_vector)
+        
+    print("done")
+>>>>>>> Stashed changes:Real_Data/Get_Angles.py
 
     return
     
