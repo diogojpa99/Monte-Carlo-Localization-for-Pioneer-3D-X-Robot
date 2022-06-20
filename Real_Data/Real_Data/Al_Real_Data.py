@@ -16,7 +16,7 @@ import Get_Data as data
 ''' Particles '''
 
 # Number of particles
-original_M = M = 500
+original_M = M = 1500
 
 # Flag that defines the number of particles
 # resize_flag = 0 : Don't do nothing
@@ -43,11 +43,10 @@ robot_loc = np.empty([3,1])
 # action[0] : Distance traveled
 # action[1] : Rotation
 actions = np.empty([2,1])
-actions[0] = 0
-actions[1] = 1
+actions[0] = actions[1] = 0
 
 # Last Iteration
-last_iteration = actions.shape[0]
+last_iteration = 100
 
 ''' Optimize the algorithm '''
 
@@ -131,7 +130,7 @@ while(1):
         
         n_eff = 1/n_eff_inverse
         print("[Neff] -> ", n_eff)
-        if ( n_eff < M*0.9):
+        if ( n_eff < M*0.8):
             resampling_flag = 1
         else:
             resampling_flag = 0
@@ -164,7 +163,7 @@ while(1):
             particles = particles[0:M]
         
     # ************************** Output ********************************** #
-    '''
+    
     # Centroid of the cluster of particles
     pred_angle = np.average(particles[:,2])
     robot_angle = robot_loc[2][0]
@@ -189,7 +188,7 @@ while(1):
     print('Real Loc:',"\t", robot_loc[0][0],"\t", robot_loc[1][0],"\t", robot_angle*(180/pi))
     print("Pred Loc:", "\t", np.average(particles[:,0]),"\t", np.average(particles[:,1]),"\t", pred_angle*(180/pi))
     print("ERROR:  ","\t",errors[k][0],"\t", errors[k][1],"\t", degrees(errors[k][2]))
-    '''
+    
 
     # Plotting
     pl.plot_simulation('Particle Filter Simulation',robot_loc, particles, map.n_walls, map.map, M)
