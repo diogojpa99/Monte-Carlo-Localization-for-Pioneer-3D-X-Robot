@@ -6,29 +6,21 @@ from sensor_msgs.msg import LaserScan
 
 MEASURES = {
     -119,
-    -109,
-    -99,
+    -104,
     -89,
-    -79,
-    -69,
+    -74,
     -59,
-    -49,
-    -39,
+    -44,
     -29,
-    -19,
-    -9,
+    -14,
     1,
-    11,
-    21,
+    16,
     31,
-    41,
-    51,
+    46,
     61,
-    71,
-    81,
+    76,
     91,
-    101,
-    111
+    106
 }
 
 angles_vector = []
@@ -42,8 +34,13 @@ def callback1(data):
     angles_vector.clear()
     for angle in MEASURES:
         pos = ((angle) - (-(max_ang))) / inc
-
-    return
+        angles_vector.append(int(pos)+44)
+    angles_vector.sort()
+    print(angles_vector)
+    print("\n")
+    print("\n")
+    print("\n")
+    print("\n")
     
 def listener_1():
     rospy.init_node('listener_new2', anonymous=True)
