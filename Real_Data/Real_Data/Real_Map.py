@@ -5,8 +5,6 @@ from math import sqrt
 from numpy.random import uniform
 from math import pi
 
-import matplotlib.pyplot as plt
-
 """ ************************************* Global Variables ****************************************  """
 
 ''' Map '''
@@ -115,6 +113,7 @@ def validate_loc(loc):
 
     err = np.empty([4,1])
     err[:] = 100
+    validate_flag = 0
 
     if loc[0] < lower: loc[0] = lower
     elif loc[0] > upper: loc[0] = upper
@@ -128,6 +127,8 @@ def validate_loc(loc):
         
         avg_pnt = ((1.65+6.03)/2,(8.91+8.91)/2) 
         err[1] = sqrt( pow(avg_pnt[0]-loc[0], 2) + pow( avg_pnt[1]-loc[1],2) ) 
+
+        validate_flag = 1
     
     elif loc[0] > 6.03 and loc[1] > 1.65 and loc[1]< 8.91: 
         
@@ -137,6 +138,8 @@ def validate_loc(loc):
         avg_pnt = ((6.03+14.119)/2,(1.65+1.65)/2) 
         err[3] = sqrt( pow(avg_pnt[0]-loc[0], 2) + pow( avg_pnt[1]-loc[1],2) ) 
 
+        validate_flag = 1
+
     elif (loc[0] > 6.03 and loc[1] > 7.5): 
                 
         avg_pnt = ((1.65+6.03)/2,(8.91+8.91)/2) 
@@ -145,17 +148,18 @@ def validate_loc(loc):
         avg_pnt = (( 6.03+6.03)/2,(8.91+1.65)/2) 
         err[2] = sqrt( pow(avg_pnt[0]-loc[0], 2) + pow( avg_pnt[1]-loc[1],2) ) 
 
+        validate_flag = 1
 
-    if  np.argmin(err) == 0:
-        loc[0] = 1.65
-    elif np.argmin(err) == 1:
-        loc[1] = 8.91
-        if loc[0] > 6.03: loc[0] = 6.03
-    elif np.argmin(err) == 2:
-        loc[0] = 6.03
-        if loc[1] > 8.91: loc[1] = 8.91
-    elif np.argmin(err) == 3:
-        loc[1] = 1.65
+    if (validate_flag == 1):
+        if  np.argmin(err) == 0:
+            loc[0] = 1.65
+        elif np.argmin(err) == 1:
+            loc[1] = 8.91
+            if loc[0] > 6.03: loc[0] = 6.03
+        elif np.argmin(err) == 2:
+            loc[0] = 6.03
+            if loc[1] > 8.91: loc[1] = 8.91
+        elif np.argmin(err) == 3:
+            loc[1] = 1.65
 
     return loc
-

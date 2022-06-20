@@ -30,6 +30,7 @@ MEASURES = {
     101,
     111
 }
+
 angles_vector = []
 
 def callback1(data):
@@ -41,13 +42,9 @@ def callback1(data):
     angles_vector.clear()
     for angle in MEASURES:
         pos = ((angle) - (-(max_ang))) / inc
-        print(angle)
-        print(int(pos)+44)
-        print("\n")
-    
-        
-    print("done")
 
+    return
+    
 def listener_1():
     rospy.init_node('listener_new2', anonymous=True)
     rospy.Subscriber("scan", LaserScan, callback1)
