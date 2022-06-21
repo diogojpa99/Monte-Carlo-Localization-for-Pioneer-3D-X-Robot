@@ -53,63 +53,72 @@ real_points = np.array([[0.9540857,  10.25824194],
                         [-0.7752699,  10.31402775],
                         [-0.80623863, 10.10282398],])
 
-N = 24
+artificial_points = np.transpose(artificial_points)
+real_points = np.transpose(real_points)
+scanSize = 24
 
 def do_icp(targetScan, givenScan):
     
-    cores =  np.zeros((3, N))
-    for i in range(len(targetScan)):
-        if np.isnan(targetScan[:,i]) == False:
-            
-            distMin = np.inf
-            idx = 0
-            for j in range(len(targetScan)):
-                if np.isnan(givenScan[:,j]) == False:
-                    d = np.linalg.norm(targetScan[:,j]-givenScan[:,i])
-                    if (d < distMin):
-                        distMin = d
-                        idx = j
-            cores[1, i] = i
-            cores[2, i] = idx
-            cores[3, i] = distMin
-    
-    for i in range(len(cores, 2)):
-        for j in range(len(cores, 2)):
-            if (i == j) and (cores[1, i] != 0) and (cores[2, i] != 0):
-                if cores[2, i] == cores[2, j]:
-                    if cores[3,i]<= cores[3,j]:
-                        cores[2, j] = 0
-                        cores[3, j] = 0
-                    else:
-                        cores[2, i] = 0
-                        cores[3, i] = 0
-    
-    cntCores = 0
-    curMean = np.empty(2,1)
-    refMean = np.empty(2,1)
+    cores =  np.zeros((3, scanSize))
+    R = np.eye(2,2)
+    T = np.eye(2,1)
+    givenScan2 = givenScan
+    for iterations in range(100):
+        for i in range(scanSize):
+            if np.isnan(targetScan[0,i]) == False and np.isnan(targetScan[1,i]) == False:
+                
+                distMin = np.inf
+                idx = 0
+                for j in range(scanSize):
+                    if np.isnan(givenScan2[0,i]) == False and np.isnan(givenScan2[1,i]) == False:
+                        d = np.linalg.norm(targetScan[:,j]-givenScan2[:,i])
+                        if (d < distMin):
+                            distMin = d
+                            idx = j
+                cores[0, i] = i
+                cores[1, i] = idx
+                cores[2, i] = distMin
+        
+        for i in range(cores.shape[1]):
+            for j in range(cores.shape[1]):
+                if (i != j) and (cores[0, i] != 0) and (cores[1, i] != 0):
+                    if cores[1, i] == cores[1, j]:
+                        if cores[2, i]<= cores[2,j]:
+                            cores[1, j] = 0
+                            cores[2, j] = 0
+                        else:
+                            cores[1, i] = 0
+                            cores[2, i] = 0
+        
+        cntCores = 0
+        curMean = np.zeros((2,1))
+        refMean = np.zeros((2,1))
 
-    K = np.empty(2,2)
+        K = np.zeros((2,2))
 
-    for i in range(len(cores, 2)):
-        if (cores[1, i] != 0) and (cores[2, i] != 0):
-            
-            K = K + np.matmul(targetScan[:, cores[2,i]], np.transpose(givenScan[:, cores[1, i]]))
-            
-            curMean = curMean + givenScan[:, cores[1,i]]
-            refMean = refMean + targetScan[:, cores[2,i]]
-            cntCores = cntCores + 1
-    
-    curMean = curMean/cntCores
-    refMean = refMean/cntCores
+        for i in range(cores.shape[1]):
+            if (cores[0, i] != 0) and (cores[1, i] != 0):
+                
+                x = int(cores[1,i])
+                y = int(cores[0,i])
+                K = K + np.matmul(targetScan[:, int(cores[1,i])], np.transpose(givenScan2[:, int(cores[0,i])]))
+                
+                curMean = curMean + givenScan2[:, int(cores[0,i])]
+                refMean = refMean + targetScan[:, int(cores[1,i])]
+                cntCores = cntCores + 1
+        
+        curMean = curMean/cntCores
+        refMean = refMean/cntCores
 
-    U, S, V = np.linalg.svd(K)   
-    R_temp = U*V
-    R = R_temp*R
+        U, S, V = np.linalg.svd(K)   
+        R_temp = np.matmul(U,V)
+        R = np.matmul(R_temp,R)
 
-    T_temp = refMean - R_temp * curMean
-    T = T+T_temp
+        T_temp = refMean - np.matmul(R_temp,curMean)
+        T = T+T_temp
 
-    givenScan = np.matmul(R, givenScan)+T
+        givenScan2_temp = np.matmul(R, givenScan)
+        givenScan2 = givenScan2_temp+T
 
 if __name__ == '__main__':
     do_icp(artificial_points, real_points)
