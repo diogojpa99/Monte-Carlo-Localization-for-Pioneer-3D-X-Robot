@@ -16,7 +16,7 @@ import Get_Data as data
 ''' Particles '''
 
 # Number of particles
-original_M = M = 600
+original_M = M = 800
 
 # Flag that defines the number of particles
 # resize_flag = 0 : Don't do nothing
@@ -46,7 +46,7 @@ actions = np.empty([2,1])
 actions[0] = actions[1] = 0
 
 # Last Iteration
-last_iteration = 200
+last_iteration = 100
 
 ''' Optimize the algorithm '''
 
@@ -71,8 +71,8 @@ errors.fill(1.)
 
 def init_robot_pos(loc):
 
-    loc[0] = 9.6
-    loc[1] = 0.82
+    loc[0] = 9.3
+    loc[1] = 0.8
     loc[2] = radians(175)
 
     return loc
@@ -197,11 +197,11 @@ while(1):
     
 
     # Plotting
-    radius = -119
+    '''radius = -119
     if len(measures) != 0:
         for i in range (robot_measures.shape[0]):
             plt.scatter(robot_loc[0] + robot_measures[i]*cos(robot_loc[2] + radians(radius)), robot_measures[i]*sin(robot_loc[2] + radians(radius)) + robot_loc[1], s = 4,  c = '#e377c2')   
-            radius += 10  
+            radius += 10'''  
     pl.plot_simulation('Particle Filter Simulation',robot_loc, particles, map.n_walls, map.map, M)
     plt.clf()
 

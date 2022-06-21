@@ -33,7 +33,7 @@ laser_uncertanty = 0.05
 
 ''' Optimize the algorithm '''
 
-likelihood_sd = 0.8
+likelihood_sd = 1
 likelihood_avg_thresh = pow(10,-6)
 
 
