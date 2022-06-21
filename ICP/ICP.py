@@ -2,6 +2,7 @@ from cmath import isnan
 import numpy as np
 from scipy.linalg import svd
 from scipy.linalg import norm
+import matplotlib.pyplot as plt
 
 artificial_points = np.array([[1.65, 9.94840093],
                               [1.65, 10.23237646],
@@ -65,6 +66,14 @@ def do_icp(refScan_xy, curScan_xy):
     T = np.eye(2,1)
 
     curScan_xy2 = curScan_xy
+
+
+
+
+    plt.scatter(curScan_xy2[0,:], curScan_xy2[1,:], c="red", s = 5)
+    plt.scatter(refScan_xy[0,:], refScan_xy[1,:], c= "blue", s = 5)
+    plt.show()
+
     for iterations in range(100):
         for i in range(scanSize):
             if (np.isnan(curScan_xy2[0,i]) == False) and (np.isnan(curScan_xy2[1,i]) == False):
@@ -124,6 +133,10 @@ def do_icp(refScan_xy, curScan_xy):
 
         curScan_xy2_temp = np.matmul(R, curScan_xy)
         curScan_xy2 = curScan_xy2_temp+T
+
+        plt.scatter(curScan_xy2[0,:], curScan_xy2[1,:], c="red")
+        plt.scatter(refScan_xy[0,:], refScan_xy[1,:], c= "blue")
+        plt.show()
 
 if __name__ == '__main__':
     do_icp(artificial_points, real_points)
