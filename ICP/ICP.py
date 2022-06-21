@@ -62,13 +62,11 @@ def do_icp(refScan_xy, curScan_xy):
    
     scanSize = refScan_xy.shape[1]
     cores =  np.zeros((3, scanSize))
+    cores [:,:] = scanSize + 1
     R = np.eye(2,2)
     T = np.eye(2,1)
 
     curScan_xy2 = curScan_xy
-
-
-
 
     plt.scatter(curScan_xy2[0,:], curScan_xy2[1,:], c="red", s = 5)
     plt.scatter(refScan_xy[0,:], refScan_xy[1,:], c= "blue", s = 5)
@@ -89,17 +87,18 @@ def do_icp(refScan_xy, curScan_xy):
                 cores[0, i] = i
                 cores[1, i] = idx
                 cores[2, i] = distMin
-        
+
+        cores2 = cores        
         for i in range(cores.shape[1]):
             for j in range(cores.shape[1]):
-                if (i != j) and ( cores[0, i] + 1 != 0) and ( cores[1, i] + 1 != 0):
+                if (i != j) and (cores[0, i] != scanSize + 1) and (cores[1, i] != scanSize + 1):
                     if cores[1, i] == cores[1, j]:
                         if cores[2, i] <= cores[2,j]:
-                            cores[1, j] = 0
-                            cores[2, j] = 0
+                            cores[1, j] = scanSize + 1
+                            cores[2, j] = scanSize + 1
                         else:
-                            cores[1, i] = 0
-                            cores[2, i] = 0
+                            cores[1, i] = scanSize + 1
+                            cores[2, i] = scanSize +1
         
         cntCores = 0
         curMean = np.zeros((2,1))
@@ -108,7 +107,7 @@ def do_icp(refScan_xy, curScan_xy):
         K = np.zeros((2,2))
 
         for i in range(cores.shape[1]):
-            if (cores[0, i] +1 != 0) and (cores[1, i] +1 != 0):
+            if (cores[0, i] != scanSize + 1) and (cores[1, i] != scanSize + 1):
                 
                 K = K + np.matmul(refScan_xy[:, int(cores[1,i])], np.transpose(curScan_xy2[:, int(cores[0,i])]))
                 
