@@ -99,9 +99,10 @@ k = 0
 while(1):
 
     real_points = np.empty([24,2])
-    real_points.fill(0.
-    )
+    real_points.fill(0.)
+    
     # *********************** Robot simulation ******************************** #
+
     print("-----------------------------------------------------------------------------------")
     print("\t\t\tIteration nº:",k+1)
 
@@ -122,6 +123,7 @@ while(1):
         print('ROBOT DID NOT MOVE')
     
     # ************************** Plots  ********************************** #
+
     # Plot Map
     for i in range(31):
         plt.plot((map.map[i][0][0],map.map[i][1][0]),(map.map[i][0][1],map.map[i,1,1]), c = 'black')
@@ -145,6 +147,9 @@ while(1):
 
     print('Real Loc:',"\t", real_x,"\t", real_y,"\t", real_theta)
     print('Robot Loc:',"\t", robot_loc[0][0],"\t", robot_loc[1][0],"\t", robot_loc[2][0]*(180/pi))
+
+    # ************************** Plots  ********************************** #
+
 
     # real_points and artifical_points
     # if (real_points[i][0] == robot_loc[0] and real_points[i][1] == robot_loc[1]):
