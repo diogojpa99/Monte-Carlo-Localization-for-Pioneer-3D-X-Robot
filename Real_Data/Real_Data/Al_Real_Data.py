@@ -16,7 +16,7 @@ import Get_Data as data
 ''' Particles '''
 
 # Number of particles
-original_M = M = 500
+original_M = M = 600
 
 # Flag that defines the number of particles
 # resize_flag = 0 : Don't do nothing
@@ -46,7 +46,7 @@ actions = np.empty([2,1])
 actions[0] = actions[1] = 0
 
 # Last Iteration
-last_iteration = 100
+last_iteration = 200
 
 ''' Optimize the algorithm '''
 
@@ -71,9 +71,9 @@ errors.fill(1.)
 
 def init_robot_pos(loc):
 
-    loc[0] = 0
-    loc[1] = 0
-    loc[2] = 0
+    loc[0] = 9.6
+    loc[1] = 0.82
+    loc[2] = radians(175)
 
     return loc
 
@@ -90,6 +90,7 @@ for i in range (M):
 plt.ion()
 
 k = 0
+robot_loc = init_robot_pos(robot_loc)
 while(1):
 
     # *********************** Get Real Data ******************************** #
@@ -102,10 +103,10 @@ while(1):
         robot_measures = measures.reshape([measures.shape[1],1])
         robot_measures[np.isnan(robot_measures)] = 0
 
-    if (k == 0):
+    '''if (k == 0):
         robot_loc[0] = real_x
         robot_loc[1] = real_y
-        robot_loc[2] = real_theta
+        robot_loc[2] = real_theta'''
 
     # Update localization of the robot
     robot_loc = pf.odometry_model(robot_loc, actions[0], radians(actions[1]), 0)
@@ -134,7 +135,7 @@ while(1):
         
         n_eff = 1/n_eff_inverse
         print("[Neff] -> ", n_eff)
-        if ( n_eff < M*0.8):
+        if ( n_eff < M/2):
             resampling_flag = 1
         else:
             resampling_flag = 0
@@ -196,6 +197,11 @@ while(1):
     
 
     # Plotting
+    radius = -119
+    if len(measures) != 0:
+        for i in range (robot_measures.shape[0]):
+            plt.scatter(robot_loc[0] + robot_measures[i]*cos(robot_loc[2] + radians(radius)), robot_measures[i]*sin(robot_loc[2] + radians(radius)) + robot_loc[1], s = 4,  c = '#e377c2')   
+            radius += 10  
     pl.plot_simulation('Particle Filter Simulation',robot_loc, particles, map.n_walls, map.map, M)
     plt.clf()
 

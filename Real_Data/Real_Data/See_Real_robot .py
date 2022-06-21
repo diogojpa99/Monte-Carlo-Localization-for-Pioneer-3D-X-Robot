@@ -115,24 +115,24 @@ while(1):
     robot_loc = pf.odometry_model(robot_loc, actions[0], radians(actions[1]), 0)
     robot_loc = map.validate_loc(robot_loc)
 
-    artificial_measures = pf.laser_model(robot_loc,map.n_walls,robot_loc,map)
+    #artificial_measures = pf.laser_model(robot_loc,map.n_walls,robot_loc,map)
 
     if (actions[0] == 0 and actions[1] == 0): 
         print('ROBOT DID NOT MOVE')
     
     # Plot Map
-    for i in range(31):
-        plt.plot((map.map[i][0][0],map.map[i][1][0]),(map.map[i][0][1],map.map[i,1,1]), c = 'black')
+    '''for i in range(31):
+        plt.plot((map.map[i][0][0],map.map[i][1][0]),(map.map[i][0][1],map.map[i,1,1]), c = 'black')'''
     
     # Plot robot
     radius = -119
     if len(measures) != 0:
         for i in range (robot_measures.shape[0]):
             plt.scatter(robot_loc[0] + robot_measures[i]*cos(robot_loc[2] + radians(radius)), robot_measures[i]*sin(robot_loc[2] + radians(radius)) + robot_loc[1], s = 4,  c = '#e377c2')   
-            radius += 10   
+            radius += 4  
 
     plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = '#d62728' , s=80, label = "Real position", edgecolors='black')
-    plt.plot((robot_loc[0],(1/15)*cos(robot_loc[2])+robot_loc[0]),(robot_loc[1],(1/15)*sin(robot_loc[2])+robot_loc[1]), c = '#17becf')
+    plt.plot((robot_loc[0],(1/100)*cos(robot_loc[2])+robot_loc[0]),(robot_loc[1],(1/100)*sin(robot_loc[2])+robot_loc[1]), c = '#17becf')
     plt.pause(0.01)
     plt.show()
     plt.clf()
