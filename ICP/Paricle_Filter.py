@@ -29,7 +29,7 @@ odom_uncertainty = (0.08,0.08,0.08)
 N_measures = 24 # Number of measures of the laser model
 laser_reach = 5.6
 laser_radius_var = 10 # Angle of the laser variation
-laser_uncertanty = 0.05
+laser_uncertanty = 0.03
 
 ''' Optimize the algorithm '''
 
@@ -146,6 +146,8 @@ def laser_model(loc, n_walls, robot_loc, selected_map):
     # An laser ray only can intersect one wall
     right_wall = 0
 
+    artificial_points = np.empty([N_measures,2])
+
     for i in range(N_measures):
 
         prev_err = 100000
@@ -174,19 +176,19 @@ def laser_model(loc, n_walls, robot_loc, selected_map):
         if (intersect.shape == (2,) and selected_map.validate_pos(intersect) == 1):
 
             #Adding noise two the measures
-            x2 = intersect[0] + np.random.normal(loc=0.0, scale= laser_uncertanty, size=None) 
-            y2 = intersect[1] + np.random.normal(loc=0.0, scale= laser_uncertanty, size=None)
+            artificial_points[i][0] = x2 = intersect[0] 
+            artificial_points[i][1] = y2 = intersect[1] 
 
             # The measure is the distance between the position of the robot and the intersection
             # of the ray and the wall
             measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) )
-            if loc[0] == robot_loc[0] and loc[1] == robot_loc[1] and loc[2] == robot_loc[2]  :
-                pl.plot_laser(x2,y2)      
+            '''if loc[0] == robot_loc[0] and loc[1] == robot_loc[1] and loc[2] == robot_loc[2]  :
+                pl.plot_laser(x2,y2) '''     
              
 
         laser_radius += laser_radius_var
         
-    return measures
+    return artificial_points
 
 # normal_distribution():
 def normal_dist(x , mean , sd):

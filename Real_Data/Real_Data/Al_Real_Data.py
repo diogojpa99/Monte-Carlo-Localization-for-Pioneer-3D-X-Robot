@@ -16,7 +16,7 @@ import Get_Data as data
 ''' Particles '''
 
 # Number of particles
-original_M = M = 1500
+original_M = M = 500
 
 # Flag that defines the number of particles
 # resize_flag = 0 : Don't do nothing
@@ -92,16 +92,20 @@ plt.ion()
 k = 0
 while(1):
 
-    # *********************** Robot simulation ******************************** #
+    # *********************** Get Real Data ******************************** #
     print("-----------------------------------------------------------------------------------")
     print("\t\t\tIteration nº:",k+1)
 
-    actions[0], actions[1], measures = data.get_data()
+    real_x, real_y, real_theta, actions[0], actions[1], measures = data.get_data()
     measures = np.array(measures)
     if len(measures) != 0:
         robot_measures = measures.reshape([measures.shape[1],1])
-    measures[np.isnan(measures)] = 0
+        robot_measures[np.isnan(robot_measures)] = 0
 
+    if (k == 0):
+        robot_loc[0] = real_x
+        robot_loc[1] = real_y
+        robot_loc[2] = real_theta
 
     # Update localization of the robot
     robot_loc = pf.odometry_model(robot_loc, actions[0], radians(actions[1]), 0)
@@ -135,7 +139,7 @@ while(1):
         else:
             resampling_flag = 0
             resize_flag = 2
-        
+    
         # RESAMPLING
         if (resampling_flag == 1):
             particles = pf.low_variance_resample(w, M , particles)
@@ -184,7 +188,8 @@ while(1):
 
     if ( errors[k][2] > (5/3)*pi):
          errors[k][2] = abs(2*pi - errors[k][2])
-        
+
+    print('Real Loc:',"\t", real_x,"\t", real_y,"\t", real_theta*(180/pi))
     print('Real Loc:',"\t", robot_loc[0][0],"\t", robot_loc[1][0],"\t", robot_angle*(180/pi))
     print("Pred Loc:", "\t", np.average(particles[:,0]),"\t", np.average(particles[:,1]),"\t", pred_angle*(180/pi))
     print("ERROR:  ","\t",errors[k][0],"\t", errors[k][1],"\t", degrees(errors[k][2]))

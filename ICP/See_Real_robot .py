@@ -93,8 +93,14 @@ plt.ion()
 robot_loc = init_robot_pos(robot_loc)
 
 k = 0
+
+
+
 while(1):
 
+    real_points = np.empty([24,2])
+    real_points.fill(0.
+    )
     # *********************** Robot simulation ******************************** #
     print("-----------------------------------------------------------------------------------")
     print("\t\t\tIteration nº:",k+1)
@@ -105,21 +111,17 @@ while(1):
         robot_measures = measures.reshape([measures.shape[1],1])
         robot_measures[np.isnan(robot_measures)] = 0
 
-    '''if (k < 11 and actions[0] == 0 and actions[1] == 0):
-        robot_loc[0] = real_x
-        robot_loc[1] = real_y
-        robot_loc[2] = real_theta'''
-
-
     # Update localization of the robot
     robot_loc = pf.odometry_model(robot_loc, actions[0], radians(actions[1]), 0)
     robot_loc = map.validate_loc(robot_loc)
 
-    artificial_measures = pf.laser_model(robot_loc,map.n_walls,robot_loc,map)
+    artificial_points = pf.laser_model(robot_loc,map.n_walls,robot_loc,map)
+    #print(artificial_points)  
 
     if (actions[0] == 0 and actions[1] == 0): 
         print('ROBOT DID NOT MOVE')
     
+    # ************************** Plots  ********************************** #
     # Plot Map
     for i in range(31):
         plt.plot((map.map[i][0][0],map.map[i][1][0]),(map.map[i][0][1],map.map[i,1,1]), c = 'black')
@@ -128,9 +130,13 @@ while(1):
     radius = -119
     if len(measures) != 0:
         for i in range (robot_measures.shape[0]):
-            plt.scatter(robot_loc[0] + robot_measures[i]*cos(robot_loc[2] + radians(radius)), robot_measures[i]*sin(robot_loc[2] + radians(radius)) + robot_loc[1], s = 4,  c = '#e377c2')   
+            real_points[i][0] = robot_loc[0] + robot_measures[i]*cos(robot_loc[2] + radians(radius))
+            real_points[i][1] = robot_loc[1] + robot_measures[i]*sin(robot_loc[2] + radians(radius))               
             radius += 10   
-
+    
+    #print(real_points)
+    plt.scatter( real_points[:,0], real_points[:,1], s = 8,  c = '#e377c2')
+    plt.scatter(artificial_points[:,0], artificial_points[:,1], s = 8, c = '#2ca02c') 
     plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = '#d62728' , s=80, label = "Real position", edgecolors='black')
     plt.plot((robot_loc[0],(1/15)*cos(robot_loc[2])+robot_loc[0]),(robot_loc[1],(1/15)*sin(robot_loc[2])+robot_loc[1]), c = '#17becf')
     plt.pause(0.01)
@@ -139,99 +145,10 @@ while(1):
 
     print('Real Loc:',"\t", real_x,"\t", real_y,"\t", real_theta)
     print('Robot Loc:',"\t", robot_loc[0][0],"\t", robot_loc[1][0],"\t", robot_loc[2][0]*(180/pi))
-    # ************************** Algorithm  ********************************** #
 
-    '''
-
-    print("Nº of particles:", M)
-    if (actions[k][0] == 0 and actions[k][1] == 0):
-        print('ROBOT DID NOT MOVE')
-    else:
-
-        # PREDICT
-        particles = pf.predict(particles, actions[k], M)
-        for i in range (M):
-            particles[i] = map.validate_loc(particles[i])
-        
-        # UPDATE
-        w, likelihood_avg, resize_flag = pf.update(w, robot_measures, particles, resampling_flag, likelihood_avg, M, robot_loc, map)
-        
-        # n_eff
-        n_eff_inverse = 0
-
-        for m in range (M):
-            n_eff_inverse = n_eff_inverse + pow(w[m],2)
-        
-        n_eff = 1/n_eff_inverse
-        print("[Neff] -> ", n_eff)
-        if ( n_eff < M*0.27 ):
-            resampling_flag = 1
-        else:
-            resampling_flag = 0
-            resize_flag = 2
-        
-        # RESAMPLING
-        if (resampling_flag == 1):
-            particles = pf.low_variance_resample(w, M , particles)
-        else:
-            print('NO RESAMPLE')
-    
-    # Resizing the number of particles
-    if resize_flag == 1:
-
-        # High probability of kidnapping
-        more_particles = map.create_particles( int(M*1.2))
-        more_particles[0:M] = particles
-        particles = more_particles
-        M = int(M*1.2)
-        
-        for i in range (int(M*0.9)):
-            particles[i] = map.reposition_particle(particles[i], i )
-            particles[i] = map.validate_loc(particles[i])
-
-    
-    elif resize_flag == 2:
-
-        if ( M > int(original_M*0.3)):
-            M = int(M*0.8)
-            particles = particles[0:M]
-        
-    # ************************** Output ********************************** #
-
-    # Centroid of the cluster of particles
-    pred_angle = np.average(particles[:,2])
-    robot_angle = robot_loc[2][0]
-
-    if pred_angle > pi:
-        pred_angle -= 2*pi
-    elif pred_angle < -pi:
-        pred_angle += 2*pi
-
-    if robot_angle > pi:
-        robot_angle = robot_angle - 2*pi
-    elif robot_angle < -pi:
-        robot_angle += 2*pi
-
-    errors[k][0] = abs(np.average(particles[:,0])-robot_loc[0][0])
-    errors[k][1] = abs(np.average(particles[:,1])-robot_loc[1][0])   
-    errors[k][2] = abs(pred_angle - robot_angle) 
-
-    if ( errors[k][2] > (5/3)*pi):
-         errors[k][2] = abs(2*pi - errors[k][2])
-        
-    print('Real Loc:',"\t", robot_loc[0][0],"\t", robot_loc[1][0],"\t", robot_angle*(180/pi))
-    print("Pred Loc:", "\t", np.average(particles[:,0]),"\t", np.average(particles[:,1]),"\t", pred_angle*(180/pi))
-    print("ERROR:  ","\t",errors[k][0],"\t", errors[k][1],"\t", degrees(errors[k][2]))
-
-    # Plotting
-    pl.plot_simulation('Particle Filter Simulation',robot_loc, particles, map.n_walls, map.map, M)
-    plt.clf()
-
-    if ( ((errors[k][0] < 0.005) and (errors[k][1] < 0.005) and (errors[k][2] < 0.005)) or k == last_iteration-1):
-        break
-
-    '''
+    # real_points and artifical_points
+    # if (real_points[i][0] == robot_loc[0] and real_points[i][1] == robot_loc[1]):
+        # or precious robot loc.
+        #Invalid point: Podes por exemplo po-los a np.nan
     k +=1
 
-# Plotting Statistics
-pl.plot_erros(errors)
