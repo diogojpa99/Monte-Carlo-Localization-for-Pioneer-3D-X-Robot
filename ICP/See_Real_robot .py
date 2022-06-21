@@ -100,7 +100,7 @@ while(1):
 
     real_points = np.empty([24,2])
     real_points.fill(0.)
-    
+
     # *********************** Robot simulation ******************************** #
 
     print("-----------------------------------------------------------------------------------")
@@ -123,7 +123,6 @@ while(1):
         print('ROBOT DID NOT MOVE')
     
     # ************************** Plots  ********************************** #
-
     # Plot Map
     for i in range(31):
         plt.plot((map.map[i][0][0],map.map[i][1][0]),(map.map[i][0][1],map.map[i,1,1]), c = 'black')
