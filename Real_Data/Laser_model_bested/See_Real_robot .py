@@ -9,7 +9,6 @@ import plots as pl
 import Real_Map as map
 import Paricle_Filter as pf
 import Get_Data as data
-import ICP as icp
 
 
 """ ************************************* Global Variables ****************************************  """
@@ -117,7 +116,7 @@ while(1):
     robot_loc = pf.odometry_model(robot_loc, actions[0], radians(actions[1]), 0)
     robot_loc = map.validate_loc(robot_loc)
 
-    artificial_points = pf.laser_model(robot_loc,map.n_walls,robot_loc,map)
+    measures = pf.laser_model(robot_loc,map.n_walls,robot_loc,map)
 
 
     if (actions[0] == 0 and actions[1] == 0): 
@@ -137,7 +136,7 @@ while(1):
             radius += 10'''   
     
     plt.scatter( real_points[:,0], real_points[:,1], s = 8,  c = '#e377c2')
-    plt.scatter(artificial_points[:,0], artificial_points[:,1], s = 8, c = '#2ca02c') 
+    #plt.scatter(artificial_points[:,0], artificial_points[:,1], s = 8, c = '#2ca02c') 
     plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = '#d62728' , s=80, label = "Real position", edgecolors='black')
     plt.plot((robot_loc[0],(1/15)*cos(robot_loc[2])+robot_loc[0]),(robot_loc[1],(1/15)*sin(robot_loc[2])+robot_loc[1]), c = '#17becf')
     plt.pause(0.01)

@@ -142,15 +142,14 @@ def laser_model(loc, n_walls, robot_loc, selected_map):
     # Laser radius
     laser_radius = -119 #Variação de ângulo do laser
     
-    # Variable that determines which wall the laser intersected
     # An laser ray only can intersect one wall
-    right_wall = 0
-
-    artificial_points = np.empty([N_measures,2])
+    right_intersect = np.empty([2,])
 
     for i in range(N_measures):
 
-        prev_err = 100000
+        prev_err = 1000
+        right_intersect[0] = x1
+        right_intersect[1] = y1
         
         #Creating line segment
         ray = np.array([(x1,y1), (x1+laser_reach*cos(teta + radians(laser_radius)), y1+laser_reach*sin(teta + radians(laser_radius))) ]) 
@@ -163,32 +162,26 @@ def laser_model(loc, n_walls, robot_loc, selected_map):
 
             # The right wall is the one that is closest to the point
             if (intersect.shape == (2,) and selected_map.validate_pos(intersect) == 1):
-
-                avg_pnt = ((selected_map.map[j][0][0]+selected_map.map[j][1][0])/2,(selected_map.map[j][0][1]+selected_map.map[j][1][1])/2) 
-                err = sqrt( pow(avg_pnt[0]-x1, 2) + pow( avg_pnt[1]-y1,2) ) 
+                
+                err = sqrt( pow( intersect[0] -x1, 2) + pow( intersect[1]-y1,2) ) 
 
                 if err < prev_err:
                     prev_err = err
-                    right_wall = j
-                    
-        intersect = np.array(line_intersection(selected_map.map[right_wall], ray))
+                    right_intersect = intersect
 
-        if (intersect.shape == (2,) and selected_map.validate_pos(intersect) == 1):
+        #Adding noise two the measures
+        x2 = right_intersect[0] + np.random.normal(loc=0.0, scale= laser_uncertanty, size=None) 
+        y2 = right_intersect[1] + np.random.normal(loc=0.0, scale= laser_uncertanty, size=None)
 
-            #Adding noise two the measures
-            artificial_points[i][0] = x2 = intersect[0] 
-            artificial_points[i][1] = y2 = intersect[1] 
-
-            # The measure is the distance between the position of the robot and the intersection
-            # of the ray and the wall
-            measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) )
-            '''if loc[0] == robot_loc[0] and loc[1] == robot_loc[1] and loc[2] == robot_loc[2]  :
-                pl.plot_laser(x2,y2) '''     
+        # The measure is the distance between the position of the robot and the intersection
+        # of the ray and the wall
+        measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) )
+        if loc[0] == robot_loc[0] and loc[1] == robot_loc[1] and loc[2] == robot_loc[2]  :
+            pl.plot_laser(x2,y2)      
              
-
         laser_radius += laser_radius_var
         
-    return artificial_points
+    return measures
 
 # normal_distribution():
 def normal_dist(x , mean , sd):

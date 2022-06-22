@@ -10,7 +10,7 @@ from scipy.stats import gaussian_kde
 
 def plot_laser(x2,y2):
 
-    plt.scatter(x2, y2, s = 8, c = '#2ca02c')       
+    plt.scatter(x2, y2, s = 10, c = 'red')       
 
     return
 
@@ -32,7 +32,7 @@ def plot_simulation(label, robot_loc, particles, n_walls, map, M):
     
     # Plot Particles
     plt.scatter(x, y, c = z, s=2, label = "particles")
-    '''´
+    '''
     for i in range(M):
        plt.scatter(particles[i,0], particles[i,1], marker = (3, 0, particles[i,2]*(180/pi)), c = 'blue' , s = 10)
     '''
