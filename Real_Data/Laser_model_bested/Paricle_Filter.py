@@ -164,6 +164,7 @@ def laser_model(loc, n_walls, robot_loc, selected_map):
             # The right wall is the one that is closest to the point
             if (intersect.shape == (2,) and selected_map.validate_pos(intersect) == 1):
 
+                avg_pnt = ((selected_map.map[j][0][0]+selected_map.map[j][1][0])/2,(selected_map.map[j][0][1]+selected_map.map[j][1][1])/2) 
                 err = sqrt( pow(avg_pnt[0]-x1, 2) + pow( avg_pnt[1]-y1,2) ) 
 
                 if err < prev_err:

@@ -15,7 +15,7 @@ import Paricle_Filter as pf
 ''' Particles '''
 
 # Number of particles
-original_M = M = 1200
+original_M = M = 1000
 
 # Flag that defines the number of particles
 # resize_flag = 0 : Don't do nothing

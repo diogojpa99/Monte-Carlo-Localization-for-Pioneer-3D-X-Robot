@@ -8,7 +8,7 @@ from math import pi, radians, degrees, sin, cos
 import plots as pl
 import Real_Map as map
 import Paricle_Filter as pf
-import Get_Data as data
+import Get_Data_60_measures as data
 
 
 """ ************************************* Global Variables ****************************************  """
@@ -105,10 +105,10 @@ while(1):
         robot_measures = measures.reshape([measures.shape[1],1])
         robot_measures[np.isnan(robot_measures)] = 0
 
-    '''if (k < 11 and actions[0] == 0 and actions[1] == 0):
+    if (k < 11 and actions[0] == 0 and actions[1] == 0):
         robot_loc[0] = real_x
         robot_loc[1] = real_y
-        robot_loc[2] = real_theta'''
+        robot_loc[2] = real_theta
 
 
     # Update localization of the robot
@@ -121,15 +121,15 @@ while(1):
         print('ROBOT DID NOT MOVE')
     
     # Plot Map
-    '''for i in range(31):
-        plt.plot((map.map[i][0][0],map.map[i][1][0]),(map.map[i][0][1],map.map[i,1,1]), c = 'black')'''
+    for i in range(31):
+        plt.plot((map.map[i][0][0],map.map[i][1][0]),(map.map[i][0][1],map.map[i,1,1]), c = 'black')
     
     # Plot robot
     radius = -119
     if len(measures) != 0:
         for i in range (robot_measures.shape[0]):
             plt.scatter(robot_loc[0] + robot_measures[i]*cos(robot_loc[2] + radians(radius)), robot_measures[i]*sin(robot_loc[2] + radians(radius)) + robot_loc[1], s = 4,  c = '#e377c2')   
-            radius += 4  
+            radius += 4
 
     plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = '#d62728' , s=80, label = "Real position", edgecolors='black')
     plt.plot((robot_loc[0],(1/100)*cos(robot_loc[2])+robot_loc[0]),(robot_loc[1],(1/100)*sin(robot_loc[2])+robot_loc[1]), c = '#17becf')
@@ -139,6 +139,7 @@ while(1):
 
     print('Real Loc:',"\t", real_x,"\t", real_y,"\t", real_theta)
     print('Robot Loc:',"\t", robot_loc[0][0],"\t", robot_loc[1][0],"\t", robot_loc[2][0]*(180/pi))
+    
     # ************************** Algorithm  ********************************** #
 
     '''

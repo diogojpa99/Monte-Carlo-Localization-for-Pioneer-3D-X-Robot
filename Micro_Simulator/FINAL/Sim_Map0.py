@@ -145,7 +145,7 @@ while(1):
         
         n_eff = 1/n_eff_inverse
         print("[Neff] -> ", n_eff)
-        if ( n_eff < M*0.27 ):
+        if ( n_eff < M*0.3 ):
             resampling_flag = 1
         else:
             resampling_flag = 0
