@@ -1,4 +1,5 @@
-# !/usr/bin/env python
+
+    # !/usr/bin/env python
 
 from cmath import pi
 from numpy import array
@@ -8,15 +9,16 @@ import math
 from sensor_msgs.msg import LaserScan
 
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Pose
-from geometry_msgs.msg import Point
-from geometry_msgs.msg import Quaternion
+from geometry_msgs.msg import PoseWithCovarianceStamped
+
 
 
 #class Array:
 global vetor     
 list_prev=[]
 list_new=[]
+amcl_list_prev=[]
+amcl_list_new=[]
 pose=[]
 dist=[]
 
@@ -44,6 +46,9 @@ def callback(msg):
     list_new.append(y)
     list_new.append(z)
     list_new.append(w)
+
+    #print("callback")
+    #print(" ")
 
 
 def callback2(data):
@@ -78,11 +83,26 @@ def callback2(data):
     dist.append(vetor)
 
 
+def callback3(msg):
+    
+    x=msg.pose.pose.position.x
+    y=msg.pose.pose.position.y
+    z=msg.pose.pose.orientation.z
+    w=msg.pose.pose.orientation.w
+
+    global amcl_vetor
+    amcl_vetor=[x, y, z, w]
+
+    amcl_list_new.clear()
+    amcl_list_new.append(x)
+    amcl_list_new.append(y)
+    amcl_list_new.append(z)
+    amcl_list_new.append(w)
+
 def get_data():
 
-    pose_x= pose_y = delta_theta=0
-    x0 = y0 = theta0 = 0
-
+    amcl_pose_x = amcl_pose_y = pose_x = pose_y = delta_theta=0
+    amcl_x0 = amcl_y0 = x0 = y0 = amcl_theta0 = theta0 = 0
 
     rospy.init_node('listener_new1', anonymous=True)
 
@@ -91,7 +111,8 @@ def get_data():
     while not rospy.is_shutdown():
 
         rospy.Subscriber("pose", Odometry, callback)
-        rospy.Subscriber("scan",LaserScan, callback2)
+        rospy.Subscriber("scan", LaserScan, callback2)
+        rospy.Subscriber("amcl_pose", PoseWithCovarianceStamped, callback3)
 
         if list_new:
             if list_prev:
@@ -105,9 +126,21 @@ def get_data():
             
             for x in range(0,4):
                 list_prev.append(list_new[x])
-            
+        
         deltaD = math.sqrt((pose_x**2)+(pose_y**2))
+        
+        if amcl_list_new:
+            if amcl_list_prev:
+                amcl_x0 = amcl_list_new[0]
+                amcl_y0 = amcl_list_new[1]
+                amcl_theta0 = quaternion_to_euler(amcl_list_new[2],amcl_list_new[3])
+                amcl_list_prev.clear()
+            
+            for x in range(0,4):
+                amcl_list_prev.append(amcl_list_new[x])
+            
         r.sleep()
 
-        return x0, y0, theta0, deltaD, delta_theta, dist
+        return amcl_x0, amcl_y0, amcl_theta0*(pi/180), deltaD, delta_theta, dist 
+    
     
