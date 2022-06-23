@@ -13,7 +13,7 @@ import plots as pl
 # Our Likelihood is the sum between
 # an normal distrbution and an uniform distribution
 
-w2 = 0.4
+w2 = 0.3
 w1 = 1 - w2
 
 ''' Robot '''
@@ -22,14 +22,14 @@ w1 = 1 - w2
 # odom_uncertainty[0]: x
 # odom_uncertainty[1]: y
 # odom_uncertainty[2]: Rotation
-odom_uncertainty = (0.1,0.1,0.05)
+odom_uncertainty = (0.08,0.08,0.05)
 
 ''' Laser '''
 
 N_measures = 24 # Number of measures of the laser model
 laser_reach = 5.6
 laser_radius_var = 10 # Angle of the laser variation
-laser_uncertanty = 0.10
+laser_uncertanty = 0.08
 
 ''' Optimize the algorithm '''
 

@@ -1,5 +1,4 @@
-
-    # !/usr/bin/env python
+# !/usr/bin/env python
 
 from cmath import pi
 from numpy import array
