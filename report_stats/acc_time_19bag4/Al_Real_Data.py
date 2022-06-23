@@ -1,5 +1,6 @@
 """ *********************************** Libraries ************************************************* """
 
+import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from math import pi, radians, degrees, sin, cos
@@ -17,7 +18,7 @@ import Get_Data as data
 ''' Particles '''
 
 # Number of particles
-original_M = M = 900
+original_M = M = 600
 
 # Flag that defines the number of particles
 # resize_flag = 0 : Don't do nothing
@@ -33,6 +34,11 @@ particles = np.empty([M, 3])
 w = np.empty([M,1])
 w.fill(1.)
 
+''' Time '''
+time_actual = []
+time_diff = []
+tTotal = 0
+
 ''' Robot '''
 
 # Robot Localization
@@ -47,7 +53,7 @@ actions = np.empty([2,1])
 actions[0] = actions[1] = 0
 
 # Last Iteration
-last_iteration = 100
+last_iteration = 60
 
 ''' Optimize the algorithm '''
 
@@ -60,6 +66,12 @@ resampling_flag = 1 # Resampling Flag
 # Errors
 errors = np.empty([last_iteration,3])
 errors.fill(np.nan)
+
+errors_x_vector = []
+
+errors_y_vector = []
+
+errors_theta_vector = []
 
 #Prediction
 predict_loc = np.empty([3,1])
@@ -86,7 +98,7 @@ k = 0
 while(1):
 
     print("-----------------------------------------------------------------------------------")
-    t0= time.perf_counter()
+    t0 = time.perf_counter()
     print("\t\t\tIteration nº:",k+1)
 
     # *********************** Get Real Data ******************************** #
@@ -200,6 +212,10 @@ while(1):
     print("Pred Loc:", "\t", predict_loc[0],"\t", predict_loc[1],"\t", predict_loc[2])
     print("ERROR:  ","\t",  errors_x,"\t",   errors_y,"\t", degrees( errors_theta))
 
+    errors_x_vector.append(errors_x)
+    errors_y_vector.append(errors_y)
+    errors_theta_vector.append(errors_theta)
+
     # Get Real Measurments from hokuyo
     measures = np.array(measures)
     if len(measures) != 0:
@@ -223,13 +239,30 @@ while(1):
             radius += 10
     pl.plot('Algorithm in Offline Mode', map.n_walls, map.map, particles,robot_loc , predict_loc)
  
-    k +=1
+    k += 1
 
-    t_1= time.perf_counter() - t0
-    print("Algorithm time elapse:",t1)
+    t1 = time.perf_counter()
+    tdiff = t1 - t0
+    print("Algorithm time elapse:", tdiff)
+    tTotal += tdiff
+    time_actual.append(tTotal)
+    time_diff.append(tdiff)
 
-    '''if k == last_iteration:
-        break'''
+    if k == last_iteration:
+        break
 
 # Plotting Statistics
 #pl.plot_erros(errors)
+
+col0 = "erro_X"
+col1 = "erro_Y"
+col2 = "erro_W"
+col3 = "time"
+col4 = "diff"
+
+metrics = pd.DataFrame({col0: errors_x_vector,
+                        col1: errors_y_vector,
+                        col2: errors_theta_vector,
+                        col3: time_actual,
+                        col4: time_diff}) 
+metrics.to_excel('1.xlsx', sheet_name="sheet1", index=False)
