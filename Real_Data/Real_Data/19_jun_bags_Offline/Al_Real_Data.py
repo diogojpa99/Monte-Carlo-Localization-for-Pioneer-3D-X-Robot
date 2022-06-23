@@ -47,7 +47,7 @@ actions = np.empty([2,1])
 actions[0] = actions[1] = 0
 
 # Last Iteration
-last_iteration = 100
+last_iteration = 300
 
 ''' Optimize the algorithm '''
 
@@ -240,7 +240,7 @@ while(1):
     errors[k][1] = abs(predict_loc[1]-amcl_y)   
     errors[k][2] = abs(pred_angle - robot_angle) 
 
-    if (  errors[k][2] > (5/3)*pi):
+    if (errors[k][2] > (5/3)*pi):
         errors[k][2] = abs(2*pi - errors[k][2])
 
     print('amcl Loc:',"\t", amcl_x,"\t", amcl_y,"\t", amcl_theta*(180/pi))
@@ -254,14 +254,7 @@ while(1):
 
     # ************************** Ploting  ********************************** #
 
-    axis[1].plot(errors[k][0], c = '#bcbd22', label = "x error [m]" )
-    axis[1].plot(errors[k][1], c = '#9467bd', label = "y error [m]" )
-    axis[1].plot(errors[k][2], c = '#e377c2', label = "Orientation error [rad]")
-    axis[1].set_xlabel('time [s]')
-    axis[1].set_ylabel('Error')
-    axis[1].legend(loc='upper right')
-    axis[1].set_title('Absolute Errors between AMCL Reference and Algortihm Prediction')
-
+    plot_erros(errors)
     radius = -119
     if len(measures) != 0:
         for i in range (robot_measures.shape[0]):
