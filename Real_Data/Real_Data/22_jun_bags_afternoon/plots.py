@@ -16,7 +16,7 @@ def plot_laser(x2,y2):
 
 
 # Plot the simulation
-def plot_simulation(label, robot_loc, particles, n_walls, map, M):
+def plot_simulation(label, robot_loc, particles, n_walls, map, M, predict_loc):
 
     # Calculate the point density of the particles
     x = particles[:,0]
@@ -38,8 +38,10 @@ def plot_simulation(label, robot_loc, particles, n_walls, map, M):
     '''
 
     # Plot robot
-    #plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = '#d62728' , s=50, label = "Real position", edgecolors='black')
-    #plt.plot((robot_loc[0],(1/6)*cos(robot_loc[2])+robot_loc[0]),(robot_loc[1],(1/6)*sin(robot_loc[2])+robot_loc[1]), c = '#17becf')    
+    plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = '#d62728' , s=50, label = "amcl reference", edgecolors='blue')
+    plt.plot((robot_loc[0],(1/6)*cos(robot_loc[2])+robot_loc[0]),(robot_loc[1],(1/6)*sin(robot_loc[2])+robot_loc[1]), c = '#17becf')   
+    #plt.scatter(predict_loc[0], predict_loc[1], c = 'black' , s=50, label = "Prediction")
+    #plt.plot((predict_loc[0],(1/6)*cos(predict_loc[2])+predict_loc[0]),(predict_loc[1],(1/6)*sin(predict_loc[2])+predict_loc[1]), c = 'white')    
     plt.xlabel('x')
     plt.ylabel('y')
     plt.legend(loc='upper right')

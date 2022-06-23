@@ -1,5 +1,4 @@
-
-    # !/usr/bin/env python
+# !/usr/bin/env python
 
 from cmath import pi
 from numpy import array
@@ -143,4 +142,5 @@ def get_data():
 
         return amcl_x0, amcl_y0, amcl_theta0*(pi/180), deltaD, delta_theta, dist 
     
+
     

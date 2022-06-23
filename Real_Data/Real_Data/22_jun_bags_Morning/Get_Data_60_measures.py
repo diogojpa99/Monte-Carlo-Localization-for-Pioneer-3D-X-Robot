@@ -1,5 +1,4 @@
-
-    # !/usr/bin/env python
+# !/usr/bin/env python
 
 from cmath import pi
 from numpy import array
@@ -9,16 +8,15 @@ import math
 from sensor_msgs.msg import LaserScan
 
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import PoseWithCovarianceStamped
-
+from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Point
+from geometry_msgs.msg import Quaternion
 
 
 #class Array:
 global vetor     
 list_prev=[]
 list_new=[]
-amcl_list_prev=[]
-amcl_list_new=[]
 pose=[]
 dist=[]
 
@@ -47,62 +45,80 @@ def callback(msg):
     list_new.append(z)
     list_new.append(w)
 
-    #print("callback")
-    #print(" ")
-
 
 def callback2(data):
     
     vetor =[
     (data.ranges[46]),
-    (data.ranges[74]),
+    (data.ranges[57]),
+    (data.ranges[69]),
+    (data.ranges[80]),
+    (data.ranges[92]),
     (data.ranges[103]),
-    (data.ranges[131]),
+    (data.ranges[114]),
+    (data.ranges[126]),
+    (data.ranges[137]),
+    (data.ranges[148]),
     (data.ranges[160]),
-    (data.ranges[188]),
+    (data.ranges[171]),
+    (data.ranges[183]),
+    (data.ranges[194]),
+    (data.ranges[205]),
     (data.ranges[217]),
-    (data.ranges[245]),
+    (data.ranges[228]),
+    (data.ranges[239]),
+    (data.ranges[251]),
+    (data.ranges[262]),
     (data.ranges[274]),
-    (data.ranges[302]),
+    (data.ranges[285]),
+    (data.ranges[296]),
+    (data.ranges[308]),
+    (data.ranges[319]),
     (data.ranges[330]),
-    (data.ranges[359]),
+    (data.ranges[342]),
+    (data.ranges[353]),
+    (data.ranges[365]),
+    (data.ranges[376]),
     (data.ranges[387]),
-    (data.ranges[416]),
+    (data.ranges[399]),
+    (data.ranges[410]),
+    (data.ranges[421]),
+    (data.ranges[433]),
     (data.ranges[444]),
-    (data.ranges[473]),
+    (data.ranges[456]),
+    (data.ranges[467]),
+    (data.ranges[478]),
+    (data.ranges[490]),
     (data.ranges[501]),
-    (data.ranges[530]),
+    (data.ranges[512]),
+    (data.ranges[524]),
+    (data.ranges[535]),
+    (data.ranges[547]),
     (data.ranges[558]),
-    (data.ranges[586]),
+    (data.ranges[569]),
+    (data.ranges[581]),
+    (data.ranges[592]),
+    (data.ranges[604]),
     (data.ranges[615]),
-    (data.ranges[643]),
+    (data.ranges[626]),
+    (data.ranges[638]),
+    (data.ranges[649]),
+    (data.ranges[660]),
     (data.ranges[672]),
-    (data.ranges[700])]
-
+    (data.ranges[683]),
+    (data.ranges[695]),
+    (data.ranges[706]),
+    (data.ranges[717])]
+    
     dist.clear()
     dist.append(vetor)
 
 
-def callback3(msg):
-    
-    x=msg.pose.pose.position.x
-    y=msg.pose.pose.position.y
-    z=msg.pose.pose.orientation.z
-    w=msg.pose.pose.orientation.w
-
-    global amcl_vetor
-    amcl_vetor=[x, y, z, w]
-
-    amcl_list_new.clear()
-    amcl_list_new.append(x)
-    amcl_list_new.append(y)
-    amcl_list_new.append(z)
-    amcl_list_new.append(w)
-
 def get_data():
 
-    amcl_pose_x = amcl_pose_y = pose_x = pose_y = delta_theta=0
-    amcl_x0 = amcl_y0 = x0 = y0 = amcl_theta0 = theta0 = 0
+    pose_x= pose_y = delta_theta=0
+    x0 = y0 = theta0 = 0
+
 
     rospy.init_node('listener_new1', anonymous=True)
 
@@ -111,8 +127,7 @@ def get_data():
     while not rospy.is_shutdown():
 
         rospy.Subscriber("pose", Odometry, callback)
-        rospy.Subscriber("scan", LaserScan, callback2)
-        rospy.Subscriber("amcl_pose", PoseWithCovarianceStamped, callback3)
+        rospy.Subscriber("scan",LaserScan, callback2)
 
         if list_new:
             if list_prev:
@@ -126,21 +141,9 @@ def get_data():
             
             for x in range(0,4):
                 list_prev.append(list_new[x])
-        
+            
         deltaD = math.sqrt((pose_x**2)+(pose_y**2))
-        
-        if amcl_list_new:
-            if amcl_list_prev:
-                amcl_x0 = amcl_list_new[0]
-                amcl_y0 = amcl_list_new[1]
-                amcl_theta0 = quaternion_to_euler(amcl_list_new[2],amcl_list_new[3])
-                amcl_list_prev.clear()
-            
-            for x in range(0,4):
-                amcl_list_prev.append(amcl_list_new[x])
-            
         r.sleep()
 
-        return amcl_x0, amcl_y0, amcl_theta0*(pi/180), deltaD, delta_theta, dist 
-    
+        return x0, y0, theta0, deltaD, delta_theta, dist
     

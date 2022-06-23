@@ -7,6 +7,7 @@ import numpy as np
 import rospy
 import math
 from sensor_msgs.msg import LaserScan
+import time
 
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseWithCovarianceStamped
@@ -106,9 +107,11 @@ def get_data():
 
     rospy.init_node('listener_new1', anonymous=True)
 
-    r = rospy.Rate(1)   # leituras por segundo 
+    #r = rospy.Rate(1)   # leituras por segundo 
 
     while not rospy.is_shutdown():
+
+        t0 = time.perf_counter()
 
         rospy.Subscriber("pose", Odometry, callback)
         rospy.Subscriber("scan", LaserScan, callback2)
@@ -116,9 +119,6 @@ def get_data():
 
         if list_new:
             if list_prev:
-                x0 = list_new[0]
-                y0 = list_new[1]
-                theta0 = quaternion_to_euler(list_new[2],list_new[3])
                 delta_theta = quaternion_to_euler(list_new[2],list_new[3]) - quaternion_to_euler(list_prev[2],list_prev[3])
                 pose_x = list_new[0]-list_prev[0]
                 pose_y = list_new[1]-list_prev[1]
@@ -139,8 +139,10 @@ def get_data():
             for x in range(0,4):
                 amcl_list_prev.append(amcl_list_new[x])
             
-        r.sleep()
+        #r.sleep()
+
+        t1= time.perf_counter() - t0
+        print("Subscribe time elapse:",t1)
 
         return amcl_x0, amcl_y0, amcl_theta0*(pi/180), deltaD, delta_theta, dist 
-    
     

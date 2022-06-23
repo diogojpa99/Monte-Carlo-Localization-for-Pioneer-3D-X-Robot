@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from math import pi, radians, degrees, sin, cos
 from scipy.stats import gaussian_kde
+import time
 
 
 import plots as pl
@@ -136,6 +137,7 @@ k = 0
 while(1):
 
     print("-----------------------------------------------------------------------------------")
+    t0= time.perf_counter()
     print("\t\t\tIteration nº:",k+1)
 
     axis[0].axes.clear()
@@ -144,42 +146,6 @@ while(1):
     # *********************** Get Real Data ******************************** #
 
     amcl_x, amcl_y, amcl_theta, actions[0], actions[1], measures = data.get_data()
-
-    # *************************** Errors *********************************** #
-
-    # Centroid of the cluster of particles
-    pred_angle = np.average(particles[:,2])
-    robot_angle = amcl_theta
-
-    if pred_angle > pi:
-        pred_angle -= 2*pi
-    elif pred_angle < -pi:
-        pred_angle += 2*pi
-
-    if robot_angle > pi:
-        robot_angle = robot_angle - 2*pi
-    elif robot_angle < -pi:
-        robot_angle += 2*pi
-    
-    predict_loc[0] = np.average(particles[:,0])
-    predict_loc[1] = np.average(particles[:,1])
-    predict_loc[2] = np.average(particles[:,2])
-
-    errors[k][0] = abs(predict_loc[0]-amcl_x)
-    errors[k][1] = abs(predict_loc[1]-amcl_y)   
-    errors[k][2] = abs(pred_angle - robot_angle) 
-
-    if ( errors[k][2] > (5/3)*pi):
-         errors[k][2] = abs(2*pi - errors[k][2])
-    
-    predict_loc[0] = np.average(particles[:,0])
-    predict_loc[1] = np.average(particles[:,1])
-    predict_loc[2] = np.average(particles[:,2])
-
-    print('amcl Loc:',"\t", amcl_x,"\t", amcl_y,"\t", amcl_theta*(180/pi))
-    print("Pred Loc:", "\t", predict_loc[0],"\t", predict_loc[1],"\t", predict_loc[2])
-    print("ERROR:  ","\t",errors[k][0],"\t", errors[k][1],"\t", degrees(errors[k][2]))
-
 
     # Get Real Measurments from hokuyo
     measures = np.array(measures)
@@ -193,17 +159,6 @@ while(1):
 
     # Update localization of the robot
     #robot_loc = map.validate_loc(robot_loc)
-
-    
-    # ************************** Ploting  ********************************** #
-    
-    plot_erros(errors)
-    radius = -119
-    if len(measures) != 0:
-        for i in range (robot_measures.shape[0]):
-            axis[0].scatter(robot_loc[0] + robot_measures[i]*cos(robot_loc[2] + radians(radius)), robot_measures[i]*sin(robot_loc[2] + radians(radius)) + robot_loc[1], s = 4,  c = '#e377c2')   
-            radius += 10
-    plot('Algorithm in Offline Mode', map.n_walls, map.map)
 
 
     # ************************** Algorithm  ********************************** #
@@ -259,6 +214,61 @@ while(1):
         if ( M > int(original_M*0.3)):
             M = int(M*0.8)
             particles = particles[0:M]
+
+
+    # *************************** Errors *********************************** #
+
+    # Centroid of the cluster of particles
+    pred_angle = np.average(particles[:,2])
+    robot_angle = amcl_theta
+
+    if pred_angle > pi:
+        pred_angle -= 2*pi
+    elif pred_angle < -pi:
+        pred_angle += 2*pi
+
+    if robot_angle > pi:
+        robot_angle = robot_angle - 2*pi
+    elif robot_angle < -pi:
+        robot_angle += 2*pi
+    
+    predict_loc[0] = np.average(particles[:,0])
+    predict_loc[1] = np.average(particles[:,1])
+    predict_loc[2] = np.average(particles[:,2])
+
+    errors[k][0] = abs(predict_loc[0]-amcl_x)
+    errors[k][1] = abs(predict_loc[1]-amcl_y)   
+    errors[k][2] = abs(pred_angle - robot_angle) 
+
+    if (  errors[k][2] > (5/3)*pi):
+        errors[k][2] = abs(2*pi - errors[k][2])
+
+    print('amcl Loc:',"\t", amcl_x,"\t", amcl_y,"\t", amcl_theta*(180/pi))
+    print("Pred Loc:", "\t", predict_loc[0],"\t", predict_loc[1],"\t", predict_loc[2])
+    print("ERROR:  ","\t",  errors[k][0],"\t",   errors[k][1],"\t", degrees( errors[k][2]))
+
+    # Time
+    t1= time.perf_counter() - t0
+    print("Algorithm time elapse:",t1)
+
+
+    # ************************** Ploting  ********************************** #
+
+    axis[1].plot(errors[k][0], c = '#bcbd22', label = "x error [m]" )
+    axis[1].plot(errors[k][1], c = '#9467bd', label = "y error [m]" )
+    axis[1].plot(errors[k][2], c = '#e377c2', label = "Orientation error [rad]")
+    axis[1].set_xlabel('time [s]')
+    axis[1].set_ylabel('Error')
+    axis[1].legend(loc='upper right')
+    axis[1].set_title('Absolute Errors between AMCL Reference and Algortihm Prediction')
+
+    radius = -119
+    if len(measures) != 0:
+        for i in range (robot_measures.shape[0]):
+            axis[0].scatter(robot_loc[0] + robot_measures[i]*cos(robot_loc[2] + radians(radius)), robot_measures[i]*sin(robot_loc[2] + radians(radius)) + robot_loc[1], s = 4,  c = '#e377c2')   
+            radius += 10
+    plot('Algorithm in Offline Mode', map.n_walls, map.map)
+
         
     k +=1
 
@@ -266,4 +276,4 @@ while(1):
         break
 
 # Plotting Statistics
-pl.plot_erros(errors)
+#pl.plot_erros(errors)
