@@ -106,7 +106,7 @@ def get_data():
 
     rospy.init_node('listener_new1', anonymous=True)
 
-    r = rospy.Rate(1)   # leituras por segundo 
+    #r = rospy.Rate(1)   # leituras por segundo 
 
     while not rospy.is_shutdown():
 
@@ -138,7 +138,7 @@ def get_data():
             for x in range(0,4):
                 amcl_list_prev.append(amcl_list_new[x])
             
-        r.sleep()
+        #r.sleep()
 
         t1= time.perf_counter() - t0
         print("Subscribe time elapse:",t1)
