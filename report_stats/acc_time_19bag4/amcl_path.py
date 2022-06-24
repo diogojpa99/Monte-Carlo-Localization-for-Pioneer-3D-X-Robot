@@ -93,7 +93,7 @@ for i in range (M):
 
 robot_loc = init_robot_pos(robot_loc)
 
-amcl_path = np.empty([150,3])
+amcl_path = np.empty([135,3])
 amcl_path.fill(0.)
 
 k = 0
@@ -104,6 +104,10 @@ while(1):
     print("\t\t\tIteration nº:",k+1)
 
     real_x, real_y, real_theta, actions[0], actions[1], measures = data.get_data()
+
+    amcl_path[k][0] = real_x
+    amcl_path[k][1] = real_y
+    amcl_path[k][2] = real_theta
 
     if (actions[0] == 0 and actions[1] == 0): 
         print('ROBOT DID NOT MOVE')
@@ -139,12 +143,14 @@ while(1):
     print('Real Loc:',"\t", real_x,"\t", real_y,"\t", real_theta)
     print('Robot Loc:',"\t", robot_loc[0][0],"\t", robot_loc[1][0],"\t", robot_loc[2][0]*(180/pi))
     
-    if k > 148:
+    if k > 130:
         break
     k +=1
 
 # Plotting Statistics
 #pl.plot_erros(errors)
+
+init_flag = 0
 
 print(amcl_path)
 
@@ -156,9 +162,14 @@ plt.ylabel('y [m]')
 for i in range(31):
     plt.plot((map.map[i][0][0],map.map[i][1][0]),(map.map[i][0][1],map.map[i,1,1]), c = 'black')
 
-for k in range (150):
-    if amcl_path[k][0] != 0 and amcl_path[k][1] != 0 and amcl_path[k][2] != 0 : 
-        plt.scatter(amcl_path[k][0], amcl_path[k][1], marker = (6, 0, amcl_path[k][2]*(180/pi)), c = '#d62728' , s=70, edgecolors='black')
-        plt.plot((amcl_path[k][0],(1/10)*cos(amcl_path[k][2])+amcl_path[k][0]),(amcl_path[k][1],(1/10)*sin(amcl_path[k][2])+ amcl_path[k][1]), c = '#17becf')
+for k in range (135):
+    if amcl_path[k][0] != 0 and amcl_path[k][1] != 0 and amcl_path[k][2] != 0 and init_flag == 0: 
+        plt.scatter(amcl_path[k][0], amcl_path[k][1], marker = (6, 0, amcl_path[k][2]*(180/pi)), c = '#d62728' , s=70, edgecolors='black', label= 'Start position')
+        init_flag = 1
+    elif amcl_path[k][0] != 0 and amcl_path[k][1] != 0 and amcl_path[k][2] != 0 and init_flag == 1:
+        plt.plot((amcl_path[k][0],(1/8)*cos(amcl_path[k][2])+amcl_path[k][0]),(amcl_path[k][1],(1/8)*sin(amcl_path[k][2])+ amcl_path[k][1]), c = '#d62728')
+    if k == 130:
+        plt.scatter(amcl_path[k][0], amcl_path[k][1], marker = 'x', c = 'black' , s=70, edgecolors='black', label= 'End position')
 
+plt.legend(loc = 'upper right')
 plt.show()
