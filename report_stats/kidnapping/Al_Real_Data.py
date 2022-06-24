@@ -143,14 +143,14 @@ while(1):
         if resize_flag == 1:
 
             # High probability of kidnapping
-            more_particles = np.empty([int(M*0.2),3])
+            more_particles = np.empty([int(M*0.3),3])
             
-            for i in range(int(M*0.2)):
+            for i in range(int(M*0.3)):
                 more_particles[i] =  map.reposition_particle(more_particles[i], i )
                 more_particles[i] =  map.validate_loc(more_particles[i])
                 particles = np.append(particles, [more_particles[i]], axis = 0)
             
-            M = int(M*1.2)
+            M = int(M*1.3)
 
             # Kidnapping
             for i in range (int(M*0.8)):
