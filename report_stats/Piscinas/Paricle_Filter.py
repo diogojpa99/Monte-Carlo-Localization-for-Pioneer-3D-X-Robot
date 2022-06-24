@@ -33,8 +33,8 @@ laser_uncertanty = 0.10
 
 ''' Optimize the algorithm '''
 
-likelihood_sd = 1.5
-likelihood_avg_thresh = 0.01
+likelihood_sd = 1.25
+likelihood_avg_thresh = 0.1
 
 
 """  ************************************ Functions  *********************************************** """
@@ -222,14 +222,16 @@ def update(w, robot_measurments, particles, resampling_flag, likelihood_avg, M, 
         if ( resampling_flag == 0):
             w[i] = w[i] * prev_weights[i]
         
-    # Likelihood average for kidnapping     
+    # Likelihood average for kidnapping
     prev_likelihood_avg = likelihood_avg
-    print("Likelihood_avg: ",likelihood_avg)
+    print("Prev_Likelihood_avg: ",prev_likelihood_avg)
+
     likelihood_avg = np.average(w)
+    print("Likelihood_avg: ",likelihood_avg)
     
     # We assume that there was a kidnapping 
     if(likelihood_avg <  likelihood_avg_thresh  and prev_likelihood_avg < likelihood_avg_thresh ):
-        resize_flag = 1 #We increase the number
+        resize_flag = 1 #We increase the number of particles
 
     #Normalise
     w_normalized = w/(sum(w))

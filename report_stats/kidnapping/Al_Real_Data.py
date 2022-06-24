@@ -7,7 +7,6 @@ from math import pi, radians, degrees, sin, cos
 from scipy.stats import gaussian_kde
 import time
 
-
 import plots as pl
 import Real_Map as map
 import Paricle_Filter as pf
@@ -18,7 +17,7 @@ import Get_Data as data
 ''' Particles '''
 
 # Number of particles
-original_M = M = 600
+original_M = M = 900
 
 # Flag that defines the number of particles
 # resize_flag = 0 : Don't do nothing
@@ -53,7 +52,7 @@ actions = np.empty([2,1])
 actions[0] = actions[1] = 0
 
 # Last Iteration
-last_iteration = 60
+last_iteration = 200
 
 ''' Optimize the algorithm '''
 
@@ -68,9 +67,7 @@ errors = np.empty([last_iteration,3])
 errors.fill(np.nan)
 
 errors_x_vector = []
-
 errors_y_vector = []
-
 errors_theta_vector = []
 
 #Prediction
@@ -93,7 +90,6 @@ pl.plot('Algorithm in Offline Mode', map.n_walls, map.map, particles, robot_loc,
 
 k = 0
 
-## time init 
 
 while(1):
 
@@ -163,7 +159,7 @@ while(1):
         
         elif resize_flag == 2:
 
-            if ( M > int(original_M*0.3) and n_eff > M*0.75):
+            if ( M > int(original_M*0.3) and n_eff > M*0.9):
                 M = int(M*0.9)
                 particles = particles[0:M]
 
@@ -229,7 +225,6 @@ while(1):
     # Update localization of the robot
     # robot_loc = map.validate_loc(robot_loc)
 
-    
     # ************************** Ploting  ********************************** #
     
     radius = -119

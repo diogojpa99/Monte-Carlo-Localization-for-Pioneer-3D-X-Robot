@@ -29,11 +29,11 @@ odom_uncertainty = (0.08,0.08,0.05)
 N_measures = 24 # Number of measures of the laser model
 laser_reach = 5.6
 laser_radius_var = 10 # Angle of the laser variation
-laser_uncertanty = 0.08
+laser_uncertanty = 0.05
 
 ''' Optimize the algorithm '''
 
-likelihood_sd = 1.5
+likelihood_sd = 1.25
 likelihood_avg_thresh = 0.05
 
 

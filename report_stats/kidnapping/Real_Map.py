@@ -64,12 +64,16 @@ upper = 16
 def create_particles(M):
 
     particles = np.empty([M,3])
+    # y Wall
     particles[0:int(0.3*M), 0] = uniform(0, 1.65, size = int(M*0.3))
     particles[0:int(0.3*M), 1] = uniform(0, 16, size = int(0.3*M))
+    # x wall
     particles[int(0.3*M):int(0.7*M), 0] = uniform(1.65, 16, size = int(0.4*M))
     particles[int(0.3*M):int(0.7*M), 1] = uniform(0, 1.65, size = int(0.4*M))
+    # elevator
     particles[int(0.7*M):int(0.9*M), 0] = uniform(3.11, 6.39, size = int(0.2*M))
     particles[int(0.7*M):int(0.9*M), 1] = uniform(1.65, 7.58, size = int(0.2*M))
+    # Stairs
     particles[int(0.9*M):M, 0] = uniform(1.65, 6.03, size = int(0.1*M))
     particles[int(0.9*M):M, 1] = uniform(7.58, 8.91, size = int(0.1*M))
     particles[0:M, 2] = uniform(0, 2*pi, size = M)

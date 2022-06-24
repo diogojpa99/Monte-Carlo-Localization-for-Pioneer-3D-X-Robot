@@ -31,11 +31,11 @@ def plot(label, n_walls, map, particles, robot_loc, predict_loc):
         plt.plot((map[i][0][0],map[i][1][0]),(map[i][0][1],map[i,1,1]), c = 'black')
     
     # Plot Particles
-    plt.scatter(x, y, c = '#e377c2', s=1, label = "Particles")
+    plt.scatter(x, y, c = '#e377c2', s=3, label = "Particles")
 
     # Plot robot
-    plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = 'black' , s=40, label = "AMCL Reference", edgecolors='black')
-    plt.plot((robot_loc[0],(1/8)*cos(robot_loc[2])+robot_loc[0]),(robot_loc[1],(1/8)*sin(robot_loc[2])+robot_loc[1]), c = '#17becf')
+    #plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = 'black' , s=40, label = "AMCL Reference", edgecolors='black')
+    #plt.plot((robot_loc[0],(1/8)*cos(robot_loc[2])+robot_loc[0]),(robot_loc[1],(1/8)*sin(robot_loc[2])+robot_loc[1]), c = '#17becf')
     plt.plot((predict_loc[0],(1/8)*cos(predict_loc[2])+predict_loc[0]),(predict_loc[1],(1/8)*sin(predict_loc[2])+predict_loc[1]), c = 'black')
     plt.scatter(predict_loc[0], predict_loc[1],c = '#17becf' , s=40, label = "Prediction", edgecolors='black')
     plt.xlabel('x [m]')
