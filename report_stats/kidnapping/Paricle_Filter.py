@@ -22,19 +22,19 @@ w1 = 1 - w2
 # odom_uncertainty[0]: x
 # odom_uncertainty[1]: y
 # odom_uncertainty[2]: Rotation
-odom_uncertainty = (0.1,0.1,0.05)
+odom_uncertainty = (0.1,0.1,0.1)
 
 ''' Laser '''
 
-N_measures = 24 # Number of measures of the laser model
+N_measures = 30 # Number of measures of the laser model
 laser_reach = 5.6
-laser_radius_var = 10 # Angle of the laser variation
-laser_uncertanty = 0.10
+laser_radius_var = 8 # Angle of the laser variation
+laser_uncertanty = 0.05
 
 ''' Optimize the algorithm '''
 
-likelihood_sd = 1.2
-likelihood_avg_thresh = 0.9
+likelihood_sd = 1
+likelihood_avg_thresh = 5*pow(10,-4)
 
 
 """  ************************************ Functions  *********************************************** """
@@ -154,8 +154,9 @@ def laser_model(loc, n_walls, robot_loc, selected_map):
         #Creating line segment
         ray = np.array([(x1,y1), (x1+laser_reach*cos(teta + radians(laser_radius)), y1+laser_reach*sin(teta + radians(laser_radius))) ]) 
         '''if loc[0] == robot_loc[0] and loc[1] == robot_loc[1] and loc[2] == robot_loc[2]  :
-           plt.plot((x1,laser_reach*cos(teta + radians(laser_radius))+x1),(y1,laser_reach*sin(teta + radians(laser_radius))+y1) , c = '#17becf')'''
-
+           plt.plot((x1,laser_reach*cos(teta + radians(laser_radius))+x1),(y1,laser_reach*sin(teta + radians(laser_radius))+y1) , c = '#17becf')
+        '''
+        
         #Intersect Between the laser ray an a wall
         for j in range(n_walls):
             intersect = np.array(line_intersection(selected_map.map[j], ray))
@@ -176,12 +177,13 @@ def laser_model(loc, n_walls, robot_loc, selected_map):
         # The measure is the distance between the position of the robot and the intersection
         # of the ray and the wall
         measures[i] = sqrt( pow(x2-x1, 2) + pow( y2-y1,2) )
-        '''if loc[0] == robot_loc[0] and loc[1] == robot_loc[1] and loc[2] == robot_loc[2]  :
-            pl.plot_laser(x2,y2)'''      
+        if loc[0] == robot_loc[0] and loc[1] == robot_loc[1] and loc[2] == robot_loc[2]  :
+            pl.plot_laser(x2,y2)      
              
         laser_radius += laser_radius_var
         
     return measures
+
 
 # normal_distribution():
 def normal_dist(x , mean , sd):
@@ -214,10 +216,10 @@ def update(w, robot_measurments, particles, resampling_flag, likelihood_avg, M, 
     #The weights are the product of the likelihoods of the measurments  
     for i in range (M):
 
-        for j in range(N_measures):
+        for j in range (N_measures):
             w[i] *= ( w1*normal_dist(robot_measurments[j], distances[j][i], likelihood_sd) + w2*(1/laser_reach))
 
-        w[i] *= pow(10,18) 
+        w[i] *= pow(10,17) 
 
         if ( resampling_flag == 0):
             w[i] = w[i] * prev_weights[i]
@@ -232,17 +234,17 @@ def update(w, robot_measurments, particles, resampling_flag, likelihood_avg, M, 
         resize_flag = 1 #We increase the number
 
     #Normalise
-    w_normalized = w/(sum(w))
+    w /= sum(w) 
     
     #If all the weigths are the same do not resample
-    if np.all(w_normalized == w_normalized[0]):
+    if np.all(w == w[0]):
         resampling_flag = 0
         
 
-    return w_normalized,likelihood_avg, resize_flag,w
+    return w,likelihood_avg, resize_flag
 
 # RESAMPLING
-def low_variance_resample(weights, M):
+def low_variance_resample(weights, M, particles):
 
     positions = (np.arange(M) + np.random.random()) / M
     indexes = np.zeros(M, 'i')
@@ -256,5 +258,7 @@ def low_variance_resample(weights, M):
         else:
             j += 1
 
-    return indexes
+    particles[:] = particles[indexes]
+
+    return particles
 

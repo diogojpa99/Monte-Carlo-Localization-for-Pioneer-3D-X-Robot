@@ -10,13 +10,13 @@ from scipy.stats import gaussian_kde
 
 def plot_laser(x2,y2):
 
-    plt.scatter(x2, y2, s=5, c = '#e377c2')       
+    plt.scatter(x2, y2, c = '#e377c2')       
 
     return
 
 
 # Plot the simulation
-def plot(label, n_walls, map, particles, robot_loc, predict_loc):
+def plot_simulation(label, robot_loc, particles, n_walls, map, M):
 
     # Calculate the point density of the particles
     x = particles[:,0]
@@ -31,20 +31,22 @@ def plot(label, n_walls, map, particles, robot_loc, predict_loc):
         plt.plot((map[i][0][0],map[i][1][0]),(map[i][0][1],map[i,1,1]), c = 'black')
     
     # Plot Particles
-    plt.scatter(x, y, c = '#e377c2', s=3, label = "Particles")
+    plt.scatter(x, y, c = 'green', s=5, label = "particles")
+    '''
+    for i in range(M):
+       plt.scatter(particles[i,0], particles[i,1], marker = (3, 0, particles[i,2]*(180/pi)), c = 'blue' , s = 10)
+    '''
 
     # Plot robot
-    #plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = 'black' , s=40, label = "AMCL Reference", edgecolors='black')
-    #plt.plot((robot_loc[0],(1/8)*cos(robot_loc[2])+robot_loc[0]),(robot_loc[1],(1/8)*sin(robot_loc[2])+robot_loc[1]), c = '#17becf')
-    plt.plot((predict_loc[0],(1/8)*cos(predict_loc[2])+predict_loc[0]),(predict_loc[1],(1/8)*sin(predict_loc[2])+predict_loc[1]), c = 'black')
-    plt.scatter(predict_loc[0], predict_loc[1],c = '#17becf' , s=40, label = "Prediction", edgecolors='black')
-    plt.xlabel('x [m]')
-    plt.ylabel('y [m]')
-    plt.title(label)
+    plt.scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = '#d62728' , s=180, label = "Real position", edgecolors='black')
+    plt.plot((robot_loc[0],(1/6)*cos(robot_loc[2])+robot_loc[0]),(robot_loc[1],(1/6)*sin(robot_loc[2])+robot_loc[1]), c = '#17becf')
+    plt.xlabel('x')
+    plt.ylabel('y')
     plt.legend(loc='upper right')
+    plt.title(label)
     plt.pause(0.01)
     plt.show()
-    plt.clf()
+    #plt.clf()
   
 
     return
@@ -60,13 +62,16 @@ def plot_erros(errors):
     theta_error =  errors[:,2]
     theta_error = theta_error[ theta_error !=0]
 
-
-    plt.plot(x_error, c = '#bcbd22', label = "x error [m]" )
-    plt.plot(y_error, c = '#9467bd', label = "y error [m]" )
-    plt.plot(theta_error, c = '#e377c2', label = "Orientation error [rad]")
-    plt.xlabel('Iterations')
-    plt.ylabel('Error')
+    plt.ioff()
+    plt.close('all')
+    plt.title('Absolute Errors between Real Position and Predict')
+    plt.plot(x_error, c = '#bcbd22', label = "x" )
+    plt.plot(y_error, c = '#9467bd', label = "y" )
+    plt.plot(theta_error, c = '#e377c2', label = "theta" )
+    plt.xlabel("Number of iterations")
+    plt.ylabel("errors")
     plt.legend(loc='upper right')
-    plt.title('Absolute Errors between AMCL Reference and Algortihm Prediction')
+    plt.show()
+    plt.close()
 
     return
