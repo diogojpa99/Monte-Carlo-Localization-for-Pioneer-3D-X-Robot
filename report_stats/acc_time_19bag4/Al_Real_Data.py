@@ -18,7 +18,7 @@ import Get_Data as data
 ''' Particles '''
 
 # Number of particles
-original_M = M = 600
+original_M = M = 900
 
 # Flag that defines the number of particles
 # resize_flag = 0 : Don't do nothing
