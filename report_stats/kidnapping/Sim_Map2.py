@@ -18,9 +18,9 @@ import Paricle_Filter as pf
 # Number of particles
 # 5 vezes cada uma
 
-original_M = M = 300
+#original_M = M = 300
 #original_M = M = 600
-#original_M = M = 900
+original_M = M = 900
 
 
 # Flag that defines the number of particles
@@ -267,7 +267,7 @@ metrics = pd.DataFrame({col0: errors_x_vector,
                         col2: errors_theta_vector,
                         col3: time_actual,
                         col4: time_diff}) 
-metrics.to_excel('10.xlsx', sheet_name="sheet1", index=False)
+metrics.to_excel('5.xlsx', sheet_name="sheet1", index=False)
 
 
 # Plotting Statistics
