@@ -2,7 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from math import pi, radians, degrees
+from math import pi, radians, degrees, sin , cos
 import time
 import pandas as pd
 
@@ -123,6 +123,10 @@ print('The simulation as started')
 k = 0
 
 
+"---------------------------------------------"
+robot_path = np.empty([80,3])
+robot_path.fill(0.)
+
 while(1):
 
     # *********************** Robot simulation ******************************** #
@@ -151,7 +155,11 @@ while(1):
     if (actions[k][0] == 0 and actions[k][1] == 0):
         print('ROBOT DID NOT MOVE')
     else:
-
+        
+        robot_path[k][0] = robot_loc[0]
+        robot_path[k][1] = robot_loc[1]
+        robot_path[k][2] = robot_loc[2]
+        
         # PREDICT
         particles = pf.predict(particles, actions[k], M)
         for i in range (M):
@@ -272,3 +280,32 @@ metrics.to_excel('10.xlsx', sheet_name="sheet1", index=False)
 
 # Plotting Statistics
 pl.plot_erros(errors)
+
+# Plot Map
+plt.close
+plt.title('Path taken by the artificial robot')
+plt.xlabel('x [m]')
+plt.ylabel('y [m]')
+
+for i in range(map.n_walls):
+    plt.plot((map.map[i][0][0],map.map[i][1][0]),(map.map[i][0][1],map.map[i,1,1]), c = 'black')
+
+for k in range (80):
+    
+    plt.plot((robot_path[k][0],(1/8)*cos(robot_path[k][2])+robot_path[k][0]),(robot_path[k][1],(1/8)*sin(robot_path[k][2])+ robot_path[k][1]), c = '#d62728')
+    
+    if k == 0: 
+        plt.scatter(robot_path[k][0], robot_path[k][1], marker = (6, 0, robot_path[k][2]*(180/pi)), c = '#d62728' , s=70, edgecolors='black', label= 'Start position')
+        
+    if k == 19:
+        plt.scatter(robot_path[k][0], robot_path[k][1], marker = 'x', c = 'green' , s=70, edgecolors='black', label= 'Kidnapped position')
+    
+    if k == 21:
+        plt.scatter(robot_path[k][0], robot_path[k][1], marker = (6, 0, robot_path[k][2]*(180/pi)), c = 'green' , s=70, edgecolors='black', label= 'Robot new position after kidnapping')
+        
+    if robot_path[k][0] == 0 and robot_path[k][1] == 0 and robot_path[k][2] == 0 and k >45:
+        plt.scatter(robot_path[k-1][0], robot_path[k-1][1], marker = 'x', c = 'black' , s=70, edgecolors='black', label= 'End position')
+        break
+
+plt.legend(loc = 'upper right')
+plt.show()
