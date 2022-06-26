@@ -234,6 +234,7 @@ def update(w, robot_measurments, particles, resampling_flag, likelihood_avg, M, 
         resize_flag = 1 #We increase the number
 
     #Normalise
+    #if resampling_flag == 1:
     w /= sum(w) 
     
     #If all the weigths are the same do not resample
