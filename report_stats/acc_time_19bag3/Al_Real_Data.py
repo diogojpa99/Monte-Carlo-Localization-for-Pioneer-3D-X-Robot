@@ -18,7 +18,7 @@ import Get_Data as data
 ''' Particles '''
 
 # Number of particles
-original_M = M = 900
+original_M = M = 300
 
 # Flag that defines the number of particles
 # resize_flag = 0 : Don't do nothing
@@ -53,7 +53,7 @@ actions = np.empty([2,1])
 actions[0] = actions[1] = 0
 
 # Last Iteration
-last_iteration = 270
+last_iteration = 450
 
 ''' Optimize the algorithm '''
 
