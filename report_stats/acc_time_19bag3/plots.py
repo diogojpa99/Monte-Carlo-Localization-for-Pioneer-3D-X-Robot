@@ -60,13 +60,16 @@ def plot_erros(errors):
     theta_error =  errors[:,2]
     theta_error = theta_error[ theta_error !=0]
 
-
-    plt.plot(x_error, c = '#bcbd22', label = "x error [m]" )
-    plt.plot(y_error, c = '#9467bd', label = "y error [m]" )
-    plt.plot(theta_error, c = '#e377c2', label = "Orientation error [rad]")
-    plt.xlabel('Iterations')
-    plt.ylabel('Error')
+    plt.ioff()
+    plt.close('all')
+    plt.title('Absolute Errors between Real Position and Predict')
+    plt.plot(x_error, c = '#bcbd22', label = "x" )
+    plt.plot(y_error, c = '#9467bd', label = "y" )
+    plt.plot(theta_error, c = '#e377c2', label = "theta" )
+    plt.xlabel("Number of iterations")
+    plt.ylabel("errors")
     plt.legend(loc='upper right')
-    plt.title('Absolute Errors between AMCL Reference and Algortihm Prediction')
+    plt.show()
+    plt.close()
 
     return

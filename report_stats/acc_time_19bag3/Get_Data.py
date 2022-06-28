@@ -92,6 +92,7 @@ def callback3(msg):
 
     global amcl_vetor
     amcl_vetor=[x, y, z, w]
+    #print(amcl_vetor)
 
     amcl_list_new.clear()
     amcl_list_new.append(x)
@@ -145,3 +146,5 @@ def get_data():
 
         return amcl_x0, amcl_y0, amcl_theta0*(pi/180), deltaD, delta_theta, dist 
     
+#if __name__ == "__main__":
+#    get_data()
