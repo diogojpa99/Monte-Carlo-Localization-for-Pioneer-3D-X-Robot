@@ -11,7 +11,7 @@ from scipy.stats import gaussian_kde
 ''' Particles '''
 
 # Number of particles
-original_M = M = 1500
+original_M = M = 900
 
 # Flag that defines the number of particles
 # resize_flag = 0 : Don't do nothing
@@ -448,8 +448,8 @@ def plot(label):
     # Plot robot
     axis[0].scatter(robot_loc[0], robot_loc[1], marker = (6, 0, robot_loc[2]*(180/pi)), c = '#d62728' , s=180, label = "Real position", edgecolors='black')
     axis[0].plot((robot_loc[0],(1/5)*cos(robot_loc[2])+robot_loc[0]),(robot_loc[1],(1/5)*sin(robot_loc[2])+robot_loc[1]), c = '#17becf')
-    axis[0].set_xlabel('x')
-    axis[0].set_ylabel('y')
+    axis[0].set_xlabel('x [m]')
+    axis[0].set_ylabel('y [m]')
     axis[0].set_title(label)
     axis[1].set_xlabel('Particles')
     axis[1].set_title('Weigts')
@@ -460,6 +460,18 @@ def plot(label):
     return
 
 
+def reposition_particle(particle, reposition_flag):
+
+    if reposition_flag % 2 == 0:
+        particle[0] = uniform(0, 3, size = 1)
+        particle[1] = uniform(0, 15, size = 1)
+    else:
+        particle[0] = uniform(0, 10, size = 1)
+        particle[1] = uniform(0, 10, size = 1)
+
+    particle[2] = uniform(0, 2*pi, size = 1)
+    
+    return particle
 
 """ *********************************** main() *********************************************** """
 
@@ -548,25 +560,29 @@ while(1):
             print('NO RESAMPLE')
     
     
-    # Resizing the number of particles
-    if resize_flag == 1:
+        # Resizing the number of particles
+        if resize_flag == 1:
 
-        # High probability of kidnapping
-        more_particles = create_particles( int(M*1.2))
-        more_particles[0:M] = particles
-        particles = more_particles
-        M = int(M*1.2)
+            # High probability of kidnapping
+            more_particles = np.empty([int(M*0.2),3])
+            
+            for i in range(int(M*0.2)):
+                more_particles[i] =  reposition_particle(more_particles[i], i )
+                more_particles[i] =  validate_loc(more_particles[i])
+                particles = np.append(particles, [more_particles[i]], axis = 0)
+            
+            M = int(M*1.2)
+
+            # Kidnapping
+            for i in range (int(M*0.8)):
+                particles[i] = reposition_particle(particles[i], i )
+                particles[i] = validate_loc(particles[i])
         
-        for i in range (int(M*0.9)):
-            particles[i] = reposition_particle(particles[i], i )
-            particles[i] = validate_loc(particles[i])
+        elif resize_flag == 2:
 
-    
-    elif resize_flag == 2:
-
-        if ( M > int(original_M*0.3)):
-            M = int(M*0.8)
-            particles = particles[0:M]
+            if ( M > int(original_M*0.3) and n_eff > 0.7 ):
+                M = int(M*0.9)
+                particles = particles[0:M]
 
         
     # ************************** Output ********************************** #
