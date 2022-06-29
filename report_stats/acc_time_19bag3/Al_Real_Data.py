@@ -53,7 +53,7 @@ actions = np.empty([2,1])
 actions[0] = actions[1] = 0
 
 # Last Iteration
-last_iteration = 150
+last_iteration = 450
 
 ''' Optimize the algorithm '''
 
@@ -261,4 +261,4 @@ metrics = pd.DataFrame({col0: errors_x_vector,
                         col2: errors_theta_vector,
                         col3: time_actual,
                         col4: time_diff}) 
-metrics.to_excel('10.xlsx', sheet_name="sheet1", index=False)
+metrics.to_excel('4.xlsx', sheet_name="sheet1", index=False)

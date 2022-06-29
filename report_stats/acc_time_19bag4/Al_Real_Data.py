@@ -252,7 +252,7 @@ while(1):
         break
 
 # Plotting Statistics
-#pl.plot_erros(errors)
+pl.plot_erros(errors)
 
 col0 = "erro_X"
 col1 = "erro_Y"
