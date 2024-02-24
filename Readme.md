@@ -24,7 +24,10 @@ To run the localization algorithm:
 
 Watch the video demonstration of the Micro Simulator in action:
 
-[![Micro Simulator Demo](Micro_Simulator-Ex1.mp4)](Micro_Simulator-Ex1.mp4 "Micro Simulator Demonstration.")
+
+![Particle Filter Demo](Micro_Simulator-Ex1.gif)
+<!-- <img src="Micro_Simulator-Ex1.gif" width="500" height="300"> -->
+
 
 ## Real Data Demonstration
 
@@ -38,7 +41,7 @@ First, we showcase the planned trajectory that the Pioneer 3D-X robot is expecte
 
 Next, observe the Particle Filter Algorithm working with real data:
 
-![Particle Filter Demo](Real_data_Test.mkv)
+![Particle Filter Demo](Real_data_Test.gif)
 
 ### Error Analysis
 
