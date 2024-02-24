@@ -65,6 +65,3 @@ Included in the repository are references to essential resources and readings th
 - Gonçalo Mesquita (goncalos.mesq543@gmail.com)
 - Paulo Cruz
 - Sebastião Melo
-
-
-For more detailed information about our algorithm, implementation, and findings, please refer to the accompanying academic paper.
