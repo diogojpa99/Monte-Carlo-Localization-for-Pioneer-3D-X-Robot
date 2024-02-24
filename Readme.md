@@ -24,7 +24,7 @@ To run the localization algorithm:
 
 Watch the video demonstration of the Micro Simulator in action:
 
-[![Micro Simulator Demo](Micro_Simulator-Ex1.mkv)](Micro_Simulator-Ex1.mkv "Micro Simulator Demonstration.")
+[![Micro Simulator Demo](Micro_Simulator-Ex1.mp4)](Micro_Simulator-Ex1.mp4 "Micro Simulator Demonstration.")
 
 ## Real Data Demonstration
 
