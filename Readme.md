@@ -67,3 +67,4 @@ Included in the repository are references to essential resources and readings th
 - Sebastião Melo
 
 
+For more detailed information about our algorithm, implementation, and findings, please refer to the accompanying academic paper.
