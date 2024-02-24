@@ -61,8 +61,8 @@ Included in the repository are references to essential resources and readings th
 
 ## Contributors
 
-- Diogo Araujo
-- Gonçalo Mesquita
+- Diogo Araujo (diogoparaujo@tecnico.ulisboa.pt)
+- Gonçalo Mesquita (goncalos.mesq543@gmail.com)
 - Paulo Cruz
 - Sebastião Melo
 
